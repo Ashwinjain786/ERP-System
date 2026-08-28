@@ -1,0 +1,912 @@
+[
+  {
+    "operationId": "loginUser",
+    "description": "Unified login with roll number/employee ID, password, or magic link",
+    "method": "POST",
+    "path": "/auth/login",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "LoginInput",
+    "bodySchemaName": "LoginInput",
+    "bodyRequired": true,
+    "outputType": "AuthResponse"
+  },
+  {
+    "operationId": "logoutUser",
+    "description": "Logout current user session and invalidate token",
+    "method": "POST",
+    "path": "/auth/logout",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "GenericStatusResponse"
+  },
+  {
+    "operationId": "getCurrentUser",
+    "description": "Get authenticated user profile and assigned roles",
+    "method": "GET",
+    "path": "/auth/me",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "User"
+  },
+  {
+    "operationId": "getStudents",
+    "description": "List all students with department and semester filters",
+    "method": "GET",
+    "path": "/students",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "semester",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      {
+        "name": "batch",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "search",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Student[]"
+  },
+  {
+    "operationId": "createStudent",
+    "description": "Enroll a new student profile",
+    "method": "POST",
+    "path": "/students",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "StudentInput",
+    "bodySchemaName": "StudentInput",
+    "bodyRequired": true,
+    "outputType": "Student"
+  },
+  {
+    "operationId": "getStudentById",
+    "description": "Get student details by ID or Roll Number",
+    "method": "GET",
+    "path": "/students/{id}",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Student"
+  },
+  {
+    "operationId": "updateStudent",
+    "description": "Update student information",
+    "method": "PUT",
+    "path": "/students/{id}",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "StudentInput",
+    "bodySchemaName": "StudentInput",
+    "bodyRequired": true,
+    "outputType": "Student"
+  },
+  {
+    "operationId": "getStudentAttendance",
+    "description": "Get student subject-wise attendance logs and summary",
+    "method": "GET",
+    "path": "/students/{id}/attendance",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [
+      {
+        "name": "semester",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "AttendanceSummary"
+  },
+  {
+    "operationId": "getStudentGrades",
+    "description": "Get student marks, SGPA, CGPA, and grade cards",
+    "method": "GET",
+    "path": "/students/{id}/grades",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "GradeCard[]"
+  },
+  {
+    "operationId": "getStudentFees",
+    "description": "Get student fee dues, ledger, and payment receipts",
+    "method": "GET",
+    "path": "/students/{id}/fees",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "StudentFeeLedger"
+  },
+  {
+    "operationId": "getFacultyList",
+    "description": "List all faculty and staff members",
+    "method": "GET",
+    "path": "/faculty",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "designation",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Faculty[]"
+  },
+  {
+    "operationId": "createFaculty",
+    "description": "Create new faculty profile",
+    "method": "POST",
+    "path": "/faculty",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "FacultyInput",
+    "bodySchemaName": "FacultyInput",
+    "bodyRequired": true,
+    "outputType": "Faculty"
+  },
+  {
+    "operationId": "getFacultyById",
+    "description": "Get faculty profile details by ID",
+    "method": "GET",
+    "path": "/faculty/{id}",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Faculty"
+  },
+  {
+    "operationId": "updateFaculty",
+    "description": "Update faculty profile",
+    "method": "PUT",
+    "path": "/faculty/{id}",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "FacultyInput",
+    "bodySchemaName": "FacultyInput",
+    "bodyRequired": true,
+    "outputType": "Faculty"
+  },
+  {
+    "operationId": "getFacultyWorkload",
+    "description": "Get faculty teaching workload and lecture schedule",
+    "method": "GET",
+    "path": "/faculty/{id}/workload",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "WorkloadAssignment[]"
+  },
+  {
+    "operationId": "markAttendance",
+    "description": "Submit class lecture/lab attendance record",
+    "method": "POST",
+    "path": "/attendance/mark",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "AttendanceMarkInput",
+    "bodySchemaName": "AttendanceMarkInput",
+    "bodyRequired": true,
+    "outputType": "GenericStatusResponse"
+  },
+  {
+    "operationId": "getAttendanceReport",
+    "description": "Get institutional and departmental attendance analysis",
+    "method": "GET",
+    "path": "/attendance/report",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "semester",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      {
+        "name": "date",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "AttendanceAggregateReport"
+  },
+  {
+    "operationId": "getCourses",
+    "description": "List all academic courses and subject curriculum",
+    "method": "GET",
+    "path": "/courses",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "semester",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Course[]"
+  },
+  {
+    "operationId": "createCourse",
+    "description": "Create or register a new subject course",
+    "method": "POST",
+    "path": "/courses",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "CourseInput",
+    "bodySchemaName": "CourseInput",
+    "bodyRequired": true,
+    "outputType": "Course"
+  },
+  {
+    "operationId": "getCourseById",
+    "description": "Get subject course details and syllabus outline",
+    "method": "GET",
+    "path": "/courses/{id}",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Course"
+  },
+  {
+    "operationId": "updateCourse",
+    "description": "Update course syllabus and credits",
+    "method": "PUT",
+    "path": "/courses/{id}",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "CourseInput",
+    "bodySchemaName": "CourseInput",
+    "bodyRequired": true,
+    "outputType": "Course"
+  },
+  {
+    "operationId": "getDepartments",
+    "description": "List all academic departments",
+    "method": "GET",
+    "path": "/departments",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Department[]"
+  },
+  {
+    "operationId": "createDepartment",
+    "description": "Create academic department",
+    "method": "POST",
+    "path": "/departments",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "DepartmentInput",
+    "bodySchemaName": "DepartmentInput",
+    "bodyRequired": true,
+    "outputType": "Department"
+  },
+  {
+    "operationId": "getTimetables",
+    "description": "Get timetable grid for section, faculty, or room",
+    "method": "GET",
+    "path": "/timetables",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "semester",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      {
+        "name": "section",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "facultyId",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "TimetableGrid"
+  },
+  {
+    "operationId": "generateTimetable",
+    "description": "Generate or save conflict-free timetable matrix",
+    "method": "POST",
+    "path": "/timetables",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "TimetableGenerateInput",
+    "bodySchemaName": "TimetableGenerateInput",
+    "bodyRequired": true,
+    "outputType": "TimetableGrid"
+  },
+  {
+    "operationId": "getExaminations",
+    "description": "List examination schedules and sessions",
+    "method": "GET",
+    "path": "/examinations",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "semester",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      {
+        "name": "status",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "upcoming",
+            "ongoing",
+            "completed",
+            "evaluated"
+          ]
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Examination[]"
+  },
+  {
+    "operationId": "createExamination",
+    "description": "Create examination schedule and invigilation duties",
+    "method": "POST",
+    "path": "/examinations",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "ExaminationInput",
+    "bodySchemaName": "ExaminationInput",
+    "bodyRequired": true,
+    "outputType": "Examination"
+  },
+  {
+    "operationId": "getExamResults",
+    "description": "Get examination marks and grading results",
+    "method": "GET",
+    "path": "/examinations/{id}/results",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "ExamResult[]"
+  },
+  {
+    "operationId": "submitExamResults",
+    "description": "Submit or approve examination student marks",
+    "method": "POST",
+    "path": "/examinations/{id}/results",
+    "pathParams": [
+      {
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "MarksSubmissionInput",
+    "bodySchemaName": "MarksSubmissionInput",
+    "bodyRequired": true,
+    "outputType": "GenericStatusResponse"
+  },
+  {
+    "operationId": "getFeeStructures",
+    "description": "List fee structures by department and quota category",
+    "method": "GET",
+    "path": "/fees/structures",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "FeeStructure[]"
+  },
+  {
+    "operationId": "createFeeStructure",
+    "description": "Define fee structure schedule",
+    "method": "POST",
+    "path": "/fees/structures",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "FeeStructureInput",
+    "bodySchemaName": "FeeStructureInput",
+    "bodyRequired": true,
+    "outputType": "FeeStructure"
+  },
+  {
+    "operationId": "getFeeTransactions",
+    "description": "Get fee collection payment transactions and receipts",
+    "method": "GET",
+    "path": "/fees/transactions",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "studentId",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "status",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "success",
+            "pending",
+            "failed",
+            "refunded"
+          ]
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "FeeTransaction[]"
+  },
+  {
+    "operationId": "recordFeePayment",
+    "description": "Record online or offline fee payment receipt",
+    "method": "POST",
+    "path": "/fees/transactions",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "PaymentInput",
+    "bodySchemaName": "PaymentInput",
+    "bodyRequired": true,
+    "outputType": "FeeTransaction"
+  },
+  {
+    "operationId": "getFeeDefaulters",
+    "description": "List fee defaulters and outstanding dues by batch",
+    "method": "GET",
+    "path": "/fees/defaulters",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "semester",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "FeeDefaulter[]"
+  },
+  {
+    "operationId": "getLibraryBooks",
+    "description": "Search library book catalog and availability",
+    "method": "GET",
+    "path": "/library/books",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "search",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "category",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "availableOnly",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Book[]"
+  },
+  {
+    "operationId": "createLibraryBook",
+    "description": "Add new book title to library inventory",
+    "method": "POST",
+    "path": "/library/books",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "BookInput",
+    "bodySchemaName": "BookInput",
+    "bodyRequired": true,
+    "outputType": "Book"
+  },
+  {
+    "operationId": "issueLibraryBook",
+    "description": "Issue library book to student or faculty",
+    "method": "POST",
+    "path": "/library/circulation/issue",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "IssueBookInput",
+    "bodySchemaName": "IssueBookInput",
+    "bodyRequired": true,
+    "outputType": "CirculationRecord"
+  },
+  {
+    "operationId": "returnLibraryBook",
+    "description": "Return library book and assess late fines",
+    "method": "POST",
+    "path": "/library/circulation/return",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "ReturnBookInput",
+    "bodySchemaName": "ReturnBookInput",
+    "bodyRequired": true,
+    "outputType": "CirculationRecord"
+  },
+  {
+    "operationId": "getLibraryFines",
+    "description": "Get outstanding and paid library fine records",
+    "method": "GET",
+    "path": "/library/fines",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "userId",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "FineRecord[]"
+  },
+  {
+    "operationId": "getNotices",
+    "description": "Get campus announcements, circulars, and notices",
+    "method": "GET",
+    "path": "/notices",
+    "pathParams": [],
+    "queryParams": [
+      {
+        "name": "targetRole",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "department",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "Notice[]"
+  },
+  {
+    "operationId": "createNotice",
+    "description": "Broadcast new notice or campus alert",
+    "method": "POST",
+    "path": "/notices",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": "NoticeInput",
+    "bodySchemaName": "NoticeInput",
+    "bodyRequired": true,
+    "outputType": "Notice"
+  },
+  {
+    "operationId": "getInstitutionalOverview",
+    "description": "Get executive institutional overview KPIs and accreditation scorecard",
+    "method": "GET",
+    "path": "/analytics/overview",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "InstitutionalMetrics"
+  },
+  {
+    "operationId": "getAdmissionsAnalytics",
+    "description": "Get admissions funnel conversion metrics and demographics",
+    "method": "GET",
+    "path": "/analytics/admissions",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "AdmissionsMetrics"
+  },
+  {
+    "operationId": "getAcademicPerformanceAnalytics",
+    "description": "Get department pass percentages, CGPA distribution, and trends",
+    "method": "GET",
+    "path": "/analytics/academic-performance",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "AcademicMetrics"
+  },
+  {
+    "operationId": "getPlacementAnalytics",
+    "description": "Get campus recruitment records, top recruiters, and CTC packages",
+    "method": "GET",
+    "path": "/analytics/placements",
+    "pathParams": [],
+    "queryParams": [],
+    "headerParams": [],
+    "bodyType": null,
+    "bodySchemaName": null,
+    "bodyRequired": false,
+    "outputType": "PlacementMetrics"
+  }
+]
