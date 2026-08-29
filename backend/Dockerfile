@@ -57,9 +57,11 @@ EXPOSE 3000
 # startup: push schema → seed → start server
 CMD ["sh", "-c", "\
   echo '>>> Pushing Prisma schema...' && \
-  npx prisma db push --accept-data-loss && \
+  npx prisma db push && \
   echo '>>> Seeding database...' && \
   npx ts-node --project tsconfig.json --transpile-only prisma/seed.ts && \
+  echo '>>> Repairing and constraining library data...' && \
+  npx ts-node --project tsconfig.json --transpile-only prisma/repair-library.ts && \
   echo '>>> Starting API server...' && \
   node dist/index.js \
 "]

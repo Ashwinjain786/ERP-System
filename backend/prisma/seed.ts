@@ -133,16 +133,25 @@ async function main() {
   });
 
   // 7. Notice
-  await prisma.notice.create({
-    data: {
-      title: 'Mid-Semester Examination Schedule',
-      content: 'The mid-semester examinations will be conducted from March 15-25, 2024. Students must carry their ID cards.',
-      category: 'examination',
-      targetRole: 'student',
-      publishedBy: 'System Admin',
-      isUrgent: true
-    }
+  const examNotices = await prisma.notice.findMany({
+    where: { title: 'Mid-Semester Examination Schedule', targetRole: 'student' },
+    orderBy: { createdAt: 'asc' },
   });
+  if (examNotices.length > 1) {
+    await prisma.notice.deleteMany({ where: { id: { in: examNotices.slice(1).map((notice) => notice.id) } } });
+  }
+  if (examNotices.length === 0) {
+    await prisma.notice.create({
+      data: {
+        title: 'Mid-Semester Examination Schedule',
+        content: 'The mid-semester examinations will be conducted from March 15-25, 2024. Students must carry their ID cards.',
+        category: 'examination',
+        targetRole: 'student',
+        publishedBy: 'System Admin',
+        isUrgent: true
+      }
+    });
+  }
 
   // 8. Book
   const book = await prisma.book.upsert({
@@ -157,14 +166,37 @@ async function main() {
     }
   });
 
-  await prisma.circulationRecord.create({
-    data: {
-      bookId: book.id,
-      borrowerId: studentUser.id,
-      issueDate: new Date(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
-      status: 'issued'
-    }
+  // Keep the demo seed idempotent and repair duplicate active rows created by older seeds.
+  const activeCirculations = await prisma.circulationRecord.findMany({
+    where: { bookId: book.id, borrowerId: studentUser.id, status: { in: ['issued', 'overdue'] } },
+    orderBy: { issueDate: 'asc' },
+  });
+  const anySeedCirculation = await prisma.circulationRecord.findFirst({
+    where: { bookId: book.id, borrowerId: studentUser.id },
+    select: { id: true },
+  });
+  if (activeCirculations.length === 0 && !anySeedCirculation) {
+    await prisma.circulationRecord.create({
+      data: {
+        bookId: book.id,
+        borrowerId: studentUser.id,
+        issueDate: new Date(),
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+        status: 'issued'
+      }
+    });
+  } else if (activeCirculations.length > 1) {
+    await prisma.circulationRecord.updateMany({
+      where: { id: { in: activeCirculations.slice(1).map((record) => record.id) } },
+      data: { status: 'returned', returnDate: new Date(), fineAmount: 0 },
+    });
+  }
+  const activeBookLoans = await prisma.circulationRecord.count({
+    where: { bookId: book.id, status: { in: ['issued', 'overdue'] } },
+  });
+  await prisma.book.update({
+    where: { id: book.id },
+    data: { availableCopies: Math.max(0, book.totalCopies - activeBookLoans) },
   });
 
   // 9. Permissions
@@ -229,28 +261,16 @@ async function main() {
 
   // 11. Leave Requests for Faculty (seeds FacultyLeaves page)
   if (facultyProfile) {
-    await prisma.leaveRequest.create({
-      data: {
-        facultyId: facultyProfile.id,
-        type: 'Sick Leave',
-        fromDate: new Date('2024-03-10'),
-        toDate: new Date('2024-03-12'),
-        days: 3,
-        reason: 'Medical treatment',
-        status: 'approved'
-      }
-    });
-    await prisma.leaveRequest.create({
-      data: {
-        facultyId: facultyProfile.id,
-        type: 'Casual Leave',
-        fromDate: new Date('2024-04-05'),
-        toDate: new Date('2024-04-06'),
-        days: 2,
-        reason: 'Family function',
-        status: 'pending'
-      }
-    });
+    const seededLeaves = [
+      { type: 'Sick Leave', fromDate: new Date('2024-03-10'), toDate: new Date('2024-03-12'), days: 3, reason: 'Medical treatment', status: 'approved' },
+      { type: 'Casual Leave', fromDate: new Date('2024-04-05'), toDate: new Date('2024-04-06'), days: 2, reason: 'Family function', status: 'pending' },
+    ] as const;
+    for (const leave of seededLeaves) {
+      const existingLeave = await prisma.leaveRequest.findFirst({
+        where: { facultyId: facultyProfile.id, type: leave.type, fromDate: leave.fromDate },
+      });
+      if (!existingLeave) await prisma.leaveRequest.create({ data: { facultyId: facultyProfile.id, ...leave } });
+    }
   }
 
   // 12. Additional Book and notice for Library
@@ -265,18 +285,34 @@ async function main() {
       availableCopies: 3
     }
   });
+  const activeBook2Loans = await prisma.circulationRecord.count({
+    where: { bookId: book2.id, status: { in: ['issued', 'overdue'] } },
+  });
+  await prisma.book.update({
+    where: { id: book2.id },
+    data: { availableCopies: Math.max(0, book2.totalCopies - activeBook2Loans) },
+  });
 
   // 13. Second Notice - General announcement
-  await prisma.notice.create({
-    data: {
-      title: 'Campus Recruitment Drive - TCS & Infosys',
-      content: 'TCS and Infosys will be conducting campus recruitment drives next month. Final year students must register by April 10.',
-      category: 'general',
-      targetRole: 'student',
-      publishedBy: 'Placement Cell',
-      isUrgent: false
-    }
+  const recruitmentNotices = await prisma.notice.findMany({
+    where: { title: 'Campus Recruitment Drive - TCS & Infosys', targetRole: 'student' },
+    orderBy: { createdAt: 'asc' },
   });
+  if (recruitmentNotices.length > 1) {
+    await prisma.notice.deleteMany({ where: { id: { in: recruitmentNotices.slice(1).map((notice) => notice.id) } } });
+  }
+  if (recruitmentNotices.length === 0) {
+    await prisma.notice.create({
+      data: {
+        title: 'Campus Recruitment Drive - TCS & Infosys',
+        content: 'TCS and Infosys will be conducting campus recruitment drives next month. Final year students must register by April 10.',
+        category: 'general',
+        targetRole: 'student',
+        publishedBy: 'Placement Cell',
+        isUrgent: false
+      }
+    });
+  }
 
   // 14. A second Student for richer data
   const student2Password = await bcrypt.hash('student123', 10);

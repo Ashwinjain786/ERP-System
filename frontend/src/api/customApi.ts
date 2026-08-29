@@ -32,6 +32,9 @@ export const getFacultyLeaves = (facultyId: string) =>
 export const getLibraryCirculation = (borrowerId?: string) =>
   fetchWithConfig(`/library/circulation${borrowerId ? `?borrowerId=${borrowerId}` : ''}`);
 
+export const payLibraryFine = (fineId: string) =>
+  fetchWithConfig(`/library/fines/${encodeURIComponent(fineId)}/pay`, { method: 'POST' });
+
 // General
 export const getAllTimetables = (params?: { section?: string; semester?: number; department?: string }) => {
   const qs = params

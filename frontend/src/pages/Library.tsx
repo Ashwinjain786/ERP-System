@@ -2,15 +2,13 @@ import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
-  Library as LibraryIcon, BookOpen, ArrowRight, BookMarked, AlertTriangle, 
-  TrendingUp, Users, FileText
+  BookOpen, ArrowRight, BookMarked, AlertTriangle, Users, FileText
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLibraryBooks, useCirculationRecords, useLibraryFines } from '@/features/library/hooks';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -51,18 +49,14 @@ function StatCard({ label, value, subtext, icon: Icon, color }: {
 export default function Library() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const { user } = useAuth();
-  
   const { data: books } = useLibraryBooks();
   const { data: circulation } = useCirculationRecords();
   const { data: fines } = useLibraryFines();
 
-  const totalBooks = books?.length || 0;
+  const totalBooks = books?.reduce((acc, b) => acc + (b.totalCopies || 0), 0) || 0;
   const availableBooks = books?.reduce((acc, b) => acc + b.availableCopies, 0) || 0;
-  const issuedBooks = circulation?.filter(c => c.status === 'issued').length || 0;
+  const issuedBooks = circulation?.filter(c => c.status === 'issued' || c.status === 'overdue').length || 0;
   const overdueBooks = circulation?.filter(c => c.status === 'overdue').length || 0;
-  const pendingFines = fines?.filter(f => f.status === 'unpaid').reduce((acc, f) => acc + f.amount, 0) || 0;
-
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b-2 border-border/60 bg-gradient-to-r from-primary/5 via-background to-background">
@@ -85,7 +79,7 @@ export default function Library() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard 
                   label="Total Books" 
-                  value={totalBooks * 5}
+                  value={totalBooks}
                   subtext="Across all categories"
                   icon={BookOpen}
                   color="bg-emerald-500"
@@ -100,7 +94,7 @@ export default function Library() {
                 <StatCard 
                   label="Currently Issued" 
                   value={issuedBooks}
-                  subtext="Books with students"
+                  subtext="Books currently on loan"
                   icon={Users}
                   color="bg-violet-500"
                 />

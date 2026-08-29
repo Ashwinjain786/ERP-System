@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
-import { AlertTriangle, DollarSign, CheckCircle, Clock, Filter, Search, Receipt } from 'lucide-react';
+import { AlertTriangle, DollarSign, CheckCircle, Clock, Search, Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useLibraryFines } from '@/features/library/hooks';
+import { useLibraryFines, usePayLibraryFine } from '@/features/library/hooks';
 import { cn } from '@/lib/utils';
 import type { FineRecord } from '@/api/apiInterface';
 
@@ -24,6 +24,7 @@ export default function LibraryFines() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: fines, isLoading } = useLibraryFines();
+  const payFine = usePayLibraryFine();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
@@ -48,10 +49,14 @@ export default function LibraryFines() {
     setSelectedFine(fine);
   };
 
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
     if (!selectedFine) return;
-    alert(`Payment of ₹${selectedFine.amount} processed for ${selectedFine.userName}`);
-    setSelectedFine(null);
+    try {
+      await payFine.mutateAsync(selectedFine.id);
+      setSelectedFine(null);
+    } catch {
+      // The mutation error is rendered in the confirmation dialog.
+    }
   };
 
   return (
@@ -257,9 +262,10 @@ export default function LibraryFines() {
                 <Button variant="outline" className="flex-1" onClick={() => setSelectedFine(null)}>
                   Cancel
                 </Button>
-                <Button className="flex-1" onClick={confirmPayment}>
-                  Confirm Payment
+                <Button className="flex-1" onClick={confirmPayment} disabled={payFine.isPending}>
+                  {payFine.isPending ? 'Processing...' : 'Confirm Payment'}
                 </Button>
+                {payFine.isError && <p className="text-sm text-destructive mt-2">{(payFine.error as Error).message}</p>}
               </div>
             </motion.div>
           </motion.div>

@@ -3,10 +3,10 @@ import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
 import { ScanBarcode, BookMarked, ArrowRightLeft, Calendar, User, BookOpen, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useCirculationRecords, useLibraryBooks } from '@/features/library/hooks';
+import { useCirculationRecords, useIssueLibraryBook, useLibraryBooks, useReturnLibraryBook } from '@/features/library/hooks';
 import { cn } from '@/lib/utils';
 import type { Book, CirculationRecord } from '@/api/apiInterface';
 
@@ -25,27 +25,81 @@ export default function LibraryCirculation() {
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: circulation, isLoading: isLoadingCirculation } = useCirculationRecords();
   const { data: books } = useLibraryBooks();
+  const issueBook = useIssueLibraryBook();
+  const returnBook = useReturnLibraryBook();
   
   const [barcodeInput, setBarcodeInput] = useState('');
+  const [borrowerInput, setBorrowerInput] = useState('');
+  const [durationDays, setDurationDays] = useState('14');
+  const [actionError, setActionError] = useState('');
   const [activeTab, setActiveTab] = useState<'issue' | 'return'>('issue');
   const [scannedItem, setScannedItem] = useState<{type: 'book' | 'card'; data: Book | CirculationRecord | { id: string; name: string }} | null>(null);
 
   const handleScan = () => {
     if (!barcodeInput.trim()) return;
-    
+    setActionError('');
+
     const book = books?.find(b => b.isbn === barcodeInput || b.id === barcodeInput);
+    const record = circulation?.find(c =>
+      c.id === barcodeInput || c.bookId === barcodeInput || (book && c.bookId === book.id)
+    );
+
+    // Returning must resolve an existing circulation record before resolving the book.
+    if (activeTab === 'return' && record) {
+      setScannedItem({ type: 'book', data: { ...record, title: record.bookTitle } });
+      return;
+    }
     if (book) {
       setScannedItem({ type: 'book', data: book });
       return;
     }
-    
-    const record = circulation?.find(c => c.id === barcodeInput || c.bookId === barcodeInput);
     if (record) {
       setScannedItem({ type: 'book', data: { ...record, title: record.bookTitle } });
       return;
     }
     
-    setScannedItem({ type: 'card', data: { id: barcodeInput, name: 'Student/Staff Card' } });
+    setScannedItem(null);
+    setActionError('No matching book or circulation record was found.');
+  };
+
+  const handleIssue = async () => {
+    setActionError('');
+    if (!scannedItem || scannedItem.type !== 'book' || !('isbn' in scannedItem.data)) {
+      setActionError('Scan a book ISBN or book ID first.');
+      return;
+    }
+    if (!borrowerInput.trim()) {
+      setActionError('Enter the borrower user ID or scan their ID.');
+      return;
+    }
+    try {
+      await issueBook.mutateAsync({
+        bookId: scannedItem.data.id,
+        borrowerId: borrowerInput.trim(),
+        durationDays: Number(durationDays) || 14,
+      });
+      setScannedItem(null);
+      setBarcodeInput('');
+      setBorrowerInput('');
+    } catch (error) {
+      setActionError((error as Error).message);
+    }
+  };
+
+  const handleReturn = async (recordOverride?: CirculationRecord) => {
+    setActionError('');
+    const record = recordOverride || (scannedItem?.type === 'book' && 'bookId' in scannedItem.data ? scannedItem.data as CirculationRecord : undefined);
+    if (!record || !('id' in record)) {
+      setActionError('Scan an active circulation record, book ID, or circulation ID first.');
+      return;
+    }
+    try {
+      await returnBook.mutateAsync({ circulationId: record.id });
+      setScannedItem(null);
+      setBarcodeInput('');
+    } catch (error) {
+      setActionError((error as Error).message);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -97,12 +151,24 @@ export default function LibraryCirculation() {
                         />
                       </div>
                     </div>
+                    {activeTab === 'issue' && (
+                      <div className="w-full md:w-64">
+                        <label className="text-sm font-medium mb-2 block">Borrower User ID</label>
+                        <Input value={borrowerInput} onChange={(e) => setBorrowerInput(e.target.value)} placeholder="User ID" className="h-12" />
+                      </div>
+                    )}
+                    {activeTab === 'issue' && (
+                      <div className="w-full md:w-32">
+                        <label className="text-sm font-medium mb-2 block">Days</label>
+                        <Input type="number" min="1" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} className="h-12" />
+                      </div>
+                    )}
                     <div className="flex gap-2 w-full md:w-auto">
-                      <Button size="lg" onClick={handleScan} className="flex-1 md:flex-none">
+                      <Button size="lg" onClick={() => { setActiveTab('issue'); handleScan(); }} className="flex-1 md:flex-none">
                         <BookMarked className="w-5 h-5 mr-2" />
                         Issue
                       </Button>
-                      <Button size="lg" variant="outline" onClick={handleScan} className="flex-1 md:flex-none">
+                      <Button size="lg" variant="outline" onClick={() => { setActiveTab('return'); handleScan(); }} className="flex-1 md:flex-none">
                         <ArrowRightLeft className="w-5 h-5 mr-2" />
                         Return
                       </Button>
@@ -131,10 +197,21 @@ export default function LibraryCirculation() {
                               </p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => setScannedItem(null)}>
-                            Clear
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            {scannedItem.type === 'book' && 'isbn' in scannedItem.data && (
+                              <Button size="sm" onClick={handleIssue} disabled={issueBook.isPending}>
+                                {issueBook.isPending ? 'Issuing...' : 'Issue Book'}
+                              </Button>
+                            )}
+                            {scannedItem.type === 'book' && 'bookId' in scannedItem.data && (
+                              <Button size="sm" onClick={() => handleReturn()} disabled={returnBook.isPending}>
+                                {returnBook.isPending ? 'Returning...' : 'Return Book'}
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={() => setScannedItem(null)}>Clear</Button>
+                          </div>
                         </div>
+                        {actionError && <p className="mt-3 text-sm text-destructive">{actionError}</p>}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -230,7 +307,7 @@ export default function LibraryCirculation() {
                       </div>
                       {record.status !== 'returned' && (
                         <div className="shrink-0">
-                          <Button size="sm">
+                          <Button size="sm" onClick={() => handleReturn(record)} disabled={returnBook.isPending}>
                             <ArrowRightLeft className="w-4 h-4 mr-1" />
                             {record.status === 'overdue' ? 'Return & Pay Fine' : 'Return'}
                           </Button>

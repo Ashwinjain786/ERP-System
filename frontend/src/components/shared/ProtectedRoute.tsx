@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, role } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -23,6 +23,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  const isLibraryManagementRoute = location.pathname === '/library' || location.pathname.startsWith('/library/');
+  if (isLibraryManagementRoute && role !== 'librarian' && role !== 'admin') {
+    return <Navigate to={role ? `/${role}` : '/login'} replace />;
   }
 
   return <AppLayout>{children}</AppLayout>;

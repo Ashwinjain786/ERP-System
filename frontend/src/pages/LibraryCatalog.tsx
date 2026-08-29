@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Search, BookOpen, Filter, Tag, MapPin, Layers } from 'lucide-react';
+import { Search, BookOpen, Filter, Tag, MapPin, Layers, Plus, X } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useLibraryBooks } from '@/features/library/hooks';
+import { useCreateLibraryBook, useLibraryBooks } from '@/features/library/hooks';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -18,15 +19,38 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-const categories = ['All', 'Programming', 'Computer Science', 'Database', 'Mathematics', 'Physics', 'Literature', 'History'];
-
 export default function LibraryCatalog() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: books, isLoading } = useLibraryBooks();
+  const { role } = useAuth();
+  const createBook = useCreateLibraryBook();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [form, setForm] = useState({ isbn: '', title: '', author: '', category: '', totalCopies: '1', rackLocation: '' });
+
+  const categories = useMemo(() => [
+    'All',
+    ...Array.from(new Set((books || []).map(book => book.category).filter((category): category is string => !!category))).sort(),
+  ], [books]);
+
+  const handleCreateBook = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const totalCopies = Number(form.totalCopies);
+    if (!form.isbn.trim() || !form.title.trim() || !form.author.trim() || !Number.isInteger(totalCopies) || totalCopies < 1) return;
+    try {
+      await createBook.mutateAsync({
+        isbn: form.isbn.trim(), title: form.title.trim(), author: form.author.trim(),
+        category: form.category.trim() || undefined, totalCopies, rackLocation: form.rackLocation.trim() || undefined,
+      });
+      setForm({ isbn: '', title: '', author: '', category: '', totalCopies: '1', rackLocation: '' });
+      setShowCreateForm(false);
+    } catch {
+      // The mutation error is rendered below the form.
+    }
+  };
 
   const filteredBooks = useMemo(() => {
     if (!books) return [];
@@ -46,11 +70,19 @@ export default function LibraryCatalog() {
         <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
           <Wrapper initial="hidden" animate="show" className="space-y-6">
             <Wrapper variants={item}>
-              <div>
+              <div className="flex items-start justify-between gap-4">
+                <div>
                 <h1 className="font-display text-3xl font-bold tracking-tight">Book Catalog</h1>
                 <p className="mt-1 text-muted-foreground">
                   Browse and search the library collection
                 </p>
+                </div>
+                {(role === 'librarian' || role === 'admin') && (
+                  <Button onClick={() => setShowCreateForm(value => !value)}>
+                    {showCreateForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                    {showCreateForm ? 'Close' : 'Add Book'}
+                  </Button>
+                )}
               </div>
             </Wrapper>
 
@@ -74,6 +106,23 @@ export default function LibraryCatalog() {
                   Clear Filters
                 </Button>
               </div>
+            </Wrapper>
+
+            <Wrapper variants={item}>
+              {showCreateForm && (role === 'librarian' || role === 'admin') && (
+                <form onSubmit={handleCreateBook} className="grid gap-3 rounded-xl border-2 border-primary/20 bg-card p-4 md:grid-cols-2 lg:grid-cols-3">
+                  <Input required placeholder="ISBN" value={form.isbn} onChange={e => setForm({ ...form, isbn: e.target.value })} />
+                  <Input required placeholder="Title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+                  <Input required placeholder="Author" value={form.author} onChange={e => setForm({ ...form, author: e.target.value })} />
+                  <Input placeholder="Category" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
+                  <Input required min="1" step="1" type="number" placeholder="Total copies" value={form.totalCopies} onChange={e => setForm({ ...form, totalCopies: e.target.value })} />
+                  <Input placeholder="Rack location" value={form.rackLocation} onChange={e => setForm({ ...form, rackLocation: e.target.value })} />
+                  <Button type="submit" disabled={createBook.isPending} className="md:col-span-2 lg:col-span-3">
+                    {createBook.isPending ? 'Saving...' : 'Save Book'}
+                  </Button>
+                  {createBook.isError && <p className="text-sm text-destructive md:col-span-2 lg:col-span-3">{(createBook.error as Error).message}</p>}
+                </form>
+              )}
             </Wrapper>
 
             <Wrapper variants={item}>
