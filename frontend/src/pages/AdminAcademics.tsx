@@ -8,7 +8,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCourses, useDepartments } from '@/features/admin/hooks';
+import { useCourses, useDepartments, useDepartmentMutations } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -47,9 +47,12 @@ export default function AdminAcademics() {
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const [activeTab, setActiveTab] = useState<'courses'>('courses');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDepartmentForm, setShowDepartmentForm] = useState(false);
+  const [departmentForm, setDepartmentForm] = useState({ code: '', name: '' });
 
   const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: departments } = useDepartments();
+  const departmentMutations = useDepartmentMutations();
 
   const filteredCourses = courses?.filter(c => {
     return c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,7 +79,7 @@ export default function AdminAcademics() {
                     <p className="text-sm text-muted-foreground">Programs, degrees, and courses</p>
                   </div>
                 </div>
-                <Button>
+                <Button onClick={() => setShowDepartmentForm((value) => !value)}>
                   <Plus className="w-4 h-4 mr-2" /> Add New
                 </Button>
               </div>
@@ -87,6 +90,20 @@ export default function AdminAcademics() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+        <Card className="mb-6 border-2 border-border/60">
+          <CardHeader><CardTitle className="text-lg font-display">Departments</CardTitle><CardDescription>{departments?.length ?? 0} departments</CardDescription></CardHeader>
+          <CardContent>
+            {showDepartmentForm && <form className="mb-5 flex flex-col md:flex-row gap-3" onSubmit={async (event) => { event.preventDefault(); await departmentMutations.create.mutateAsync(departmentForm); setDepartmentForm({ code: '', name: '' }); setShowDepartmentForm(false); }}>
+              <Input required placeholder="Code" value={departmentForm.code} onChange={(e) => setDepartmentForm({ ...departmentForm, code: e.target.value })} />
+              <Input required placeholder="Department name" value={departmentForm.name} onChange={(e) => setDepartmentForm({ ...departmentForm, name: e.target.value })} />
+              <Button type="submit" disabled={departmentMutations.create.isPending}>Create</Button>
+            </form>}
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {departments?.map((department) => <div key={department.id} className="rounded-lg border p-4"><div className="flex justify-between"><span className="font-mono font-semibold">{department.code}</span><div className="flex gap-1"><Button variant="ghost" size="sm" onClick={async () => { const name = window.prompt('Department name', department.name); if (name && name.trim() !== department.name) await departmentMutations.update.mutateAsync({ id: department.id, name: name.trim() }); }}>Edit</Button><Button variant="ghost" size="sm" onClick={async () => { if (window.confirm(`Delete ${department.name}?`)) await departmentMutations.remove.mutateAsync(department.id); }}>Delete</Button></div></div><p className="font-medium mt-1">{department.name}</p><p className="text-xs text-muted-foreground">{department.facultyCount ?? 0} faculty • {department.studentCount ?? 0} students{department.headOfDepartment ? ` • HOD: ${department.headOfDepartment}` : ''}</p></div>)}
+              {!departments?.length && <p className="text-sm text-muted-foreground">No departments found.</p>}
+            </div>
+          </CardContent>
+        </Card>
         <div className="flex gap-1 mb-6 p-1 bg-muted/50 rounded-xl w-fit">
           {tabs.map((tab) => (
             <button

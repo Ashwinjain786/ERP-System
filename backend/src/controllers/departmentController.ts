@@ -35,21 +35,35 @@ export const getDepartments = async (req: Request, res: Response) => {
 
 export const createDepartment = async (req: Request, res: Response) => {
   try {
-    const { code, name, headOfDepartmentId } = req.body;
+    const code = typeof req.body.code === 'string' ? req.body.code.trim().toUpperCase() : '';
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const headOfDepartmentId = req.body.headOfDepartmentId || null;
+    if (!code || !name) return res.status(400).json({ success: false, message: 'Department code and name are required' });
+    if (headOfDepartmentId) {
+      const faculty = await prisma.faculty.findUnique({ where: { id: headOfDepartmentId } });
+      if (!faculty) return res.status(400).json({ success: false, message: 'Head of department faculty not found' });
+    }
 
     const department = await prisma.department.create({
       data: { code, name, headOfDepartmentId: headOfDepartmentId || null }
     });
 
-    res.json(department);
+    res.status(201).json(department);
   } catch (error) {
+    if ((error as any)?.code === 'P2002') return res.status(409).json({ success: false, message: 'Department code or name already exists' });
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
 export const updateDepartment = async (req: Request, res: Response) => {
   try {
-    const { name, headOfDepartmentId } = req.body;
+    const name = req.body.name === undefined ? undefined : String(req.body.name).trim();
+    const headOfDepartmentId = req.body.headOfDepartmentId === undefined ? undefined : (req.body.headOfDepartmentId || null);
+    if (name !== undefined && !name) return res.status(400).json({ success: false, message: 'Department name cannot be empty' });
+    if (headOfDepartmentId) {
+      const faculty = await prisma.faculty.findUnique({ where: { id: headOfDepartmentId } });
+      if (!faculty) return res.status(400).json({ success: false, message: 'Head of department faculty not found' });
+    }
 
     const department = await prisma.department.update({
       where: { id: req.params.id },
@@ -74,6 +88,26 @@ export const updateDepartment = async (req: Request, res: Response) => {
       facultyCount: department._count.faculty,
       studentCount: department._count.students
     });
+  } catch (error) {
+    if ((error as any)?.code === 'P2025') return res.status(404).json({ success: false, message: 'Department not found' });
+    if ((error as any)?.code === 'P2002') return res.status(409).json({ success: false, message: 'Department name already exists' });
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const deleteDepartment = async (req: Request, res: Response) => {
+  try {
+    const department = await prisma.department.findUnique({
+      where: { id: req.params.id },
+      include: { _count: { select: { students: true, faculty: true, courses: true, timetables: true } } }
+    });
+    if (!department) return res.status(404).json({ success: false, message: 'Department not found' });
+    const counts = department._count;
+    if (Object.values(counts).some((count) => count > 0)) {
+      return res.status(409).json({ success: false, message: 'Cannot delete a department with students, faculty, courses, or timetable entries' });
+    }
+    await prisma.department.delete({ where: { id: req.params.id } });
+    res.status(204).send();
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }

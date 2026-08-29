@@ -53,6 +53,8 @@ import {
   GetDepartmentsOutput,
   CreateDepartmentInput,
   CreateDepartmentOutput,
+  Department,
+  DepartmentInput,
   GetTimetablesInput,
   GetTimetablesOutput,
   GenerateTimetableInput,
@@ -531,6 +533,9 @@ export const createDepartment = async (input: CreateDepartmentInput): Promise<Cr
     headerParams: []
   });
 };
+
+export const updateDepartment = async (id: string, input: DepartmentInput): Promise<Department> => request<Department>({ operationId: 'updateDepartment', method: 'PUT', path: `/departments/${id}`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const deleteDepartment = async (id: string): Promise<void> => request<void>({ operationId: 'deleteDepartment', method: 'DELETE', path: `/departments/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
 
 export const getTimetables = async (input: GetTimetablesInput): Promise<GetTimetablesOutput> => {
   return request<GetTimetablesOutput>({

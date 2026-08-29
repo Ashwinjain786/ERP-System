@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getStudents,
   getFacultyList,
@@ -10,6 +10,7 @@ import {
   getFeeDefaulters,
   getExaminations,
   getInstitutionalOverview,
+  createDepartment, updateDepartment, deleteDepartment,
 } from '@/api/apiCall';
 
 export function useStudentsList() {
@@ -37,6 +38,15 @@ export function useDepartments() {
       return await getDepartments();
     },
   });
+}
+
+export function useDepartmentMutations() {
+  const queryClient = useQueryClient();
+  return {
+    create: useMutation({ mutationFn: createDepartment, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] }) }),
+    update: useMutation({ mutationFn: ({ id, ...input }: { id: string } & any) => updateDepartment(id, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] }) }),
+    remove: useMutation({ mutationFn: deleteDepartment, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] }) }),
+  };
 }
 
 export function useCourses() {
