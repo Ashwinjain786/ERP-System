@@ -22,12 +22,12 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  // @ts-expect-error - lifecycle method for error boundary  
+
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logReactError(error, errorInfo);
   }
 
-  // @ts-expect-error - render method override
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {

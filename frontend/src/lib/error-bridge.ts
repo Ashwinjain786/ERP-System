@@ -130,7 +130,7 @@ export function initErrorBridge() {
   // 4. Resource load errors (capture phase on window)
   window.addEventListener('error', (event) => {
     const target = event.target as HTMLElement | null;
-    if (target && target !== window) {
+    if (target && target !== (window as any)) {
       const src = (target as any).src || (target as any).href || '';
       const tag = target.tagName ? target.tagName.toLowerCase() : 'element';
       addRuntimeError({

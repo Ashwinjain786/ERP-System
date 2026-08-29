@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const requiredEnvVars = ['PORT'];
+const requiredEnvVars = ['PORT', 'DATABASE_URL'];
 
 export const validateEnv = () => {
   for (const envVar of requiredEnvVars) {

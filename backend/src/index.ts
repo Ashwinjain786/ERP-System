@@ -31,9 +31,18 @@ app.use(limiter);
 app.use(morgan('combined')); // Structured logging
 app.use(express.json({ limit: '10kb' })); // Limit body size
 
+import prisma from './config/db';
+
 // 5. Routes
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'Backend is running correctly and securely!' });
+app.get('/api/health', async (req: Request, res: Response) => {
+  try {
+    // Perform a lightweight query to ensure database is connected
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', message: 'Backend and Database are running correctly and securely!' });
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(500).json({ status: 'error', message: 'Database connection failed' });
+  }
 });
 
 // 6. Centralized Error Handling
