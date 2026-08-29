@@ -145,3 +145,37 @@ export const getLibraryFines = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const getCirculationRecords = async (req: Request, res: Response) => {
+  try {
+    const { borrowerId, status } = req.query;
+    let whereClause: any = {};
+    if (borrowerId) whereClause.borrowerId = borrowerId;
+    if (status) whereClause.status = status;
+
+    const records = await prisma.circulationRecord.findMany({
+      where: whereClause,
+      include: {
+        book: true,
+        borrower: true
+      }
+    });
+
+    const formatted = records.map(r => ({
+      id: r.id,
+      bookId: r.bookId,
+      bookTitle: r.book.title,
+      borrowerId: r.borrowerId,
+      borrowerName: r.borrower.name,
+      issueDate: r.issueDate,
+      dueDate: r.dueDate,
+      returnDate: r.returnDate,
+      status: r.status,
+      fineAmount: r.fineAmount
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

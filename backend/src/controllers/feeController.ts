@@ -91,19 +91,42 @@ export const getFeeDefaulters = async (req: Request, res: Response) => {
   try {
     const defaulters = await prisma.student.findMany({
       where: { feeStatus: 'due' },
-      include: { user: true, department: true }
+      include: { 
+        user: true, 
+        department: true,
+        feeTransactions: {
+          where: { status: 'success' }
+        }
+      }
     });
 
-    const formatted = defaulters.map(d => ({
-      studentId: d.id,
-      rollNumber: d.rollNumber,
-      name: d.user.name,
-      department: d.department.name,
-      semester: d.semester,
-      dueAmount: 50000, // mock amount
-      daysOverdue: 15, // mock days
-      parentPhone: d.user.phone
-    }));
+    const formatted = [];
+    for (const d of defaulters) {
+      const structure = await prisma.feeStructure.findFirst({
+        where: { program: d.degree || 'B.Tech' }
+      });
+      
+      const expectedAmount = structure ? structure.totalAmount : 150000;
+      const paidAmount = d.feeTransactions.reduce((sum, t) => sum + t.amount, 0);
+      const dueAmount = expectedAmount - paidAmount;
+      
+      if (dueAmount > 0) {
+        const dueDate = structure ? structure.dueDate : new Date(new Date().setMonth(new Date().getMonth() - 1));
+        const diffTime = Math.abs(new Date().getTime() - dueDate.getTime());
+        const daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        formatted.push({
+          studentId: d.id,
+          rollNumber: d.rollNumber,
+          name: d.user.name,
+          department: d.department.name,
+          semester: d.semester,
+          dueAmount,
+          daysOverdue: new Date() > dueDate ? daysOverdue : 0,
+          parentPhone: d.user.phone
+        });
+      }
+    }
 
     res.json(formatted);
   } catch (error) {

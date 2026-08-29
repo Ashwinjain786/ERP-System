@@ -128,15 +128,38 @@ export const updateFaculty = async (req: Request, res: Response) => {
 
 export const getFacultyWorkload = async (req: Request, res: Response) => {
   try {
-    // Just a mock response matching WorkloadAssignment array for now
-    res.json([{
-      courseCode: 'CS101',
-      courseName: 'Intro to Programming',
-      section: 'A',
-      hoursPerWeek: 4,
-      roomNumber: 'L101',
-      totalStudents: 60
-    }]);
+    const timetables = await prisma.timetableEntry.findMany({
+      where: { facultyId: req.params.id },
+      include: { course: true }
+    });
+
+    const workloadMap = new Map<string, any>();
+    for (const t of timetables) {
+      const key = `${t.courseId}-${t.section}`;
+      if (!workloadMap.has(key)) {
+        const totalStudents = await prisma.student.count({
+          where: {
+            departmentId: t.course.departmentId,
+            semester: t.semester,
+            section: t.section
+          }
+        });
+
+        workloadMap.set(key, {
+          courseCode: t.course.code,
+          courseName: t.course.name,
+          section: t.section,
+          hoursPerWeek: 0,
+          roomNumber: t.roomNumber,
+          totalStudents
+        });
+      }
+      const existing = workloadMap.get(key);
+      existing.hoursPerWeek += 1;
+      workloadMap.set(key, existing);
+    }
+
+    res.json(Array.from(workloadMap.values()));
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }

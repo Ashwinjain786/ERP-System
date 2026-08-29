@@ -35,15 +35,60 @@ export const markAttendance = async (req: Request, res: Response) => {
 
 export const getAttendanceReport = async (req: Request, res: Response) => {
   try {
-    // Basic mock implementation for aggregate report
+    const allRecords = await prisma.attendanceRecord.findMany({
+      include: {
+        student: {
+          include: { department: true }
+        }
+      }
+    });
+
+    if (allRecords.length === 0) {
+      return res.json({
+        averageAttendance: 0,
+        totalStudentsEnrolled: 0,
+        defaultersCount: 0,
+        departmentAverages: []
+      });
+    }
+
+    const totalClasses = allRecords.length;
+    const attendedClasses = allRecords.filter(r => r.status === 'present').length;
+    const averageAttendance = (attendedClasses / totalClasses) * 100;
+
+    const totalStudentsEnrolled = await prisma.student.count();
+
+    const studentStats = new Map<string, { total: number, attended: number }>();
+    const departmentStats = new Map<string, { total: number, attended: number }>();
+
+    allRecords.forEach(r => {
+      const sStat = studentStats.get(r.studentId) || { total: 0, attended: 0 };
+      sStat.total += 1;
+      if (r.status === 'present') sStat.attended += 1;
+      studentStats.set(r.studentId, sStat);
+
+      const deptName = r.student.department.name;
+      const dStat = departmentStats.get(deptName) || { total: 0, attended: 0 };
+      dStat.total += 1;
+      if (r.status === 'present') dStat.attended += 1;
+      departmentStats.set(deptName, dStat);
+    });
+
+    let defaultersCount = 0;
+    studentStats.forEach(stat => {
+      if ((stat.attended / stat.total) * 100 < 75) defaultersCount++;
+    });
+
+    const departmentAverages = Array.from(departmentStats.entries()).map(([department, stat]) => ({
+      department,
+      percentage: (stat.attended / stat.total) * 100
+    }));
+
     res.json({
-      averageAttendance: 85,
-      totalStudentsEnrolled: 500,
-      defaultersCount: 15,
-      departmentAverages: [
-        { department: 'Computer Science', percentage: 88 },
-        { department: 'Mechanical', percentage: 82 }
-      ]
+      averageAttendance,
+      totalStudentsEnrolled,
+      defaultersCount,
+      departmentAverages
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });

@@ -157,14 +157,39 @@ export const updateStudent = async (req: Request, res: Response) => {
 
 export const getStudentAttendance = async (req: Request, res: Response) => {
   try {
-    const { semester } = req.query;
-    // Just a mock return matching AttendanceSummary structure
+    const records = await prisma.attendanceRecord.findMany({
+      where: { studentId: req.params.id },
+      include: { course: true }
+    });
+
+    const totalLectures = records.length;
+    const attendedLectures = records.filter(r => r.status === 'present').length;
+    const overallPercentage = totalLectures === 0 ? 0 : (attendedLectures / totalLectures) * 100;
+
+    const courseStats = new Map<string, { course: any; total: number; attended: number }>();
+    records.forEach(r => {
+      const existing = courseStats.get(r.courseId) || { course: r.course, total: 0, attended: 0 };
+      existing.total += 1;
+      if (r.status === 'present') existing.attended += 1;
+      courseStats.set(r.courseId, existing);
+    });
+
+    const detailedRecords = Array.from(courseStats.values()).map(stat => ({
+      id: stat.course.id,
+      subjectCode: stat.course.code,
+      subjectName: stat.course.name,
+      totalClasses: stat.total,
+      attendedClasses: stat.attended,
+      percentage: (stat.attended / stat.total) * 100
+    }));
+
     res.json({
       studentId: req.params.id,
-      overallPercentage: 85.5,
-      totalLectures: 100,
-      attendedLectures: 85,
-      records: []
+      overallPercentage,
+      totalLectures,
+      attendedLectures,
+      shortageWarning: overallPercentage < 75 && totalLectures > 0,
+      records: detailedRecords
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -178,22 +203,40 @@ export const getStudentGrades = async (req: Request, res: Response) => {
       include: { course: true }
     });
     
-    // Grouping by semester would go here. For now, returning flat mock.
-    res.json([{
-      semester: 1,
-      sgpa: 8.5,
-      cgpa: 8.5,
-      subjects: results.map(r => ({
-        subjectCode: r.course.code,
-        subjectName: r.course.name,
-        credits: r.course.credits,
-        internalMarks: r.internalScore,
-        endSemMarks: r.endSemScore,
-        totalMarks: r.totalScore,
-        grade: r.grade,
-        gradePoint: r.totalScore / 10
-      }))
-    }]);
+    const grouped = new Map<number, typeof results>();
+    results.forEach(r => {
+      const sem = r.course.semester;
+      const arr = grouped.get(sem) || [];
+      arr.push(r);
+      grouped.set(sem, arr);
+    });
+
+    const formatted = Array.from(grouped.entries()).map(([semester, subjects]) => {
+      const totalPoints = subjects.reduce((sum, r) => sum + (r.totalScore / 10) * r.course.credits, 0);
+      const totalCredits = subjects.reduce((sum, r) => sum + r.course.credits, 0);
+      const sgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+      
+      return {
+        semester,
+        academicYear: '2023-24',
+        sgpa: Number(sgpa.toFixed(2)),
+        cgpa: Number(sgpa.toFixed(2)),
+        totalCredits,
+        resultStatus: sgpa >= 5 ? 'PASS' : 'FAIL',
+        subjects: subjects.map(r => ({
+          subjectCode: r.course.code,
+          subjectName: r.course.name,
+          credits: r.course.credits,
+          internalMarks: r.internalScore,
+          endSemMarks: r.endSemScore,
+          totalMarks: r.totalScore,
+          grade: r.grade,
+          gradePoint: r.totalScore / 10
+        }))
+      };
+    });
+    
+    res.json(formatted);
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
