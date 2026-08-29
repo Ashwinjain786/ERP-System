@@ -12,14 +12,323 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  name      String?
-  role      Role     @default(STUDENT)
+  name      String
+  password  String   // Added for auth
+  role      Role     @default(student)
+  phone     String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studentProfile Student?
+  facultyProfile Faculty?
+  fineRecords    FineRecord[]
+  borrowedBooks  CirculationRecord[]
+}
+
+enum Role {
+  student
+  faculty
+  hod
+  admin
+  finance_officer
+  librarian
+  management
+}
+
+model Department {
+  id               String   @id @default(uuid())
+  code             String   @unique
+  name             String
+  headOfDepartment String?  // Faculty ID can be linked later
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  students Student[]
+  faculty  Faculty[]
+  courses  Course[]
+}
+
+model Student {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  rollNumber           String   @unique
+  departmentId         String
+  degree               String?
+  semester             Int      @default(1)
+  batch                String?
+  section              String?
+  cgpa                 Float?   @default(0.0)
+  attendancePercentage Float?   @default(0.0)
+  feeStatus            FeeStatus @default(due)
+  
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+  
+  attendanceRecords AttendanceRecord[]
+  examResults       ExamResult[]
+  feeTransactions   FeeTransaction[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-enum Role {
-  STUDENT
-  FACULTY
-  ADMIN
+enum FeeStatus {
+  paid
+  partial
+  due
+}
+
+model Faculty {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  employeeCode        String   @unique
+  departmentId        String
+  designation         String
+  qualification       String?
+  weeklyWorkloadHours Float?   @default(0)
+  leaveBalance        Float?   @default(0)
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+
+  timetables TimetableEntry[]
+  courses    Course[] // Courses instructed by faculty
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Course {
+  id                String   @id @default(uuid())
+  code              String   @unique
+  name              String
+  departmentId      String
+  semester          Int
+  credits           Int
+  type              String?  @default("theory") // theory, lab, elective, project
+  description       String?
+  facultyInstructor String?
+
+  department Department @relation(fields: [departmentId], references: [id])
+  faculty    Faculty?   @relation(fields: [facultyInstructor], references: [id])
+
+  attendanceRecords AttendanceRecord[]
+  examResults       ExamResult[]
+  timetables        TimetableEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AttendanceRecord {
+  id              String   @id @default(uuid())
+  studentId       String
+  courseId        String
+  date            DateTime
+  period          Int
+  status          AttendanceStatus
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AttendanceStatus {
+  present
+  absent
+}
+
+model TimetableEntry {
+  id         String   @id @default(uuid())
+  dayOfWeek  String   // Monday, Tuesday, etc.
+  period     Int
+  timeSlot   String
+  courseId   String
+  facultyId  String
+  roomNumber String
+  section    String
+  semester   Int
+
+  course  Course  @relation(fields: [courseId], references: [id])
+  faculty Faculty @relation(fields: [facultyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Examination {
+  id                 String   @id @default(uuid())
+  title              String
+  academicYear       String?
+  semester           Int
+  startDate          DateTime
+  endDate            DateTime
+  status             ExamStatus @default(upcoming)
+  hallTicketReleased Boolean    @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ExamStatus {
+  upcoming
+  ongoing
+  completed
+  evaluated
+}
+
+model ExamResult {
+  id            String   @id @default(uuid())
+  studentId     String
+  courseId      String
+  internalScore Float?
+  endSemScore   Float?
+  totalScore    Float
+  grade         String
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FeeStructure {
+  id             String   @id @default(uuid())
+  program        String
+  quota          FeeQuota @default(general)
+  tuitionFee     Float    @default(0)
+  hostelFee      Float    @default(0)
+  examFee        Float    @default(0)
+  libraryDeposit Float    @default(0)
+  totalAmount    Float
+  dueDate        DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum FeeQuota {
+  general
+  merit
+  management
+  nri
+}
+
+model FeeTransaction {
+  id            String   @id @default(uuid())
+  receiptNumber String   @unique
+  studentId     String
+  amount        Float
+  paymentMethod PaymentMethod?
+  status        TransactionStatus @default(pending)
+  paidAt        DateTime?
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PaymentMethod {
+  UPI
+  NetBanking
+  CreditCard
+  DebitCard
+  Challan
+  DemandDraft
+}
+
+enum TransactionStatus {
+  success
+  pending
+  failed
+  refunded
+}
+
+model Book {
+  id              String   @id @default(uuid())
+  isbn            String   @unique
+  title           String
+  author          String
+  publisher       String?
+  category        String?
+  rackLocation    String?
+  totalCopies     Int      @default(1)
+  availableCopies Int      @default(1)
+  coverImageUrl   String?
+
+  circulationRecords CirculationRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CirculationRecord {
+  id         String   @id @default(uuid())
+  bookId     String
+  borrowerId String
+  issueDate  DateTime
+  dueDate    DateTime
+  returnDate DateTime?
+  fineAmount Float?   @default(0)
+  status     CirculationStatus @default(issued)
+
+  book     Book @relation(fields: [bookId], references: [id])
+  borrower User @relation(fields: [borrowerId], references: [id]) // Assuming both students and faculty can borrow
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum CirculationStatus {
+  issued
+  returned
+  overdue
+}
+
+model FineRecord {
+  id       String   @id @default(uuid())
+  userId   String
+  amount   Float
+  reason   String?
+  status   FineStatus @default(unpaid)
+  issuedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum FineStatus {
+  unpaid
+  paid
+  waived
+}
+
+model Notice {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @db.Text
+  category    NoticeCategory @default(general)
+  targetRole  String?  @default("all") // can be "all", "student", "faculty", "hod"
+  department  String?  // nullable if for all departments
+  publishedBy String?
+  publishedAt DateTime @default(now())
+  isUrgent    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum NoticeCategory {
+  academic
+  examination
+  events
+  fee
+  general
 }

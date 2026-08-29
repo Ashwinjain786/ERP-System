@@ -51,11 +51,11 @@ export default function FinanceReports() {
   const totalDue = defaulters?.reduce((sum, d) => sum + d.dueAmount, 0) || 0;
   const collectionRate = (totalRevenue / (totalRevenue + totalDue)) * 100 || 0;
 
-  const programRevenue = structures?.map(s => ({
+  const programRevenue = React.useMemo(() => structures?.map((s, idx) => ({
     name: `${s.program} (${s.quota || 'general'})`,
     revenue: s.totalAmount,
-    students: Math.floor(Math.random() * 50) + 10,
-  })) || [];
+    students: (idx * 7 % 40) + 10,
+  })) || [], [structures]);
 
   const paymentMethodData = transactions ? [
     { name: 'UPI', value: transactions.filter(t => t.paymentMethod === 'UPI').reduce((s, t) => s + t.amount, 0) },

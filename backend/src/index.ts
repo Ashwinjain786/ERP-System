@@ -34,6 +34,32 @@ app.use(express.json({ limit: '10kb' })); // Limit body size
 import prisma from './config/db';
 
 // 5. Routes
+import authRoutes from './routes/authRoutes';
+import studentRoutes from './routes/studentRoutes';
+import facultyRoutes from './routes/facultyRoutes';
+import departmentRoutes from './routes/departmentRoutes';
+import courseRoutes from './routes/courseRoutes';
+import attendanceRoutes from './routes/attendanceRoutes';
+import timetableRoutes from './routes/timetableRoutes';
+import examinationRoutes from './routes/examinationRoutes';
+import feeRoutes from './routes/feeRoutes';
+import libraryRoutes from './routes/libraryRoutes';
+import noticeRoutes from './routes/noticeRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
+
+app.use('/auth', authRoutes);
+app.use('/students', studentRoutes);
+app.use('/faculty', facultyRoutes);
+app.use('/departments', departmentRoutes);
+app.use('/courses', courseRoutes);
+app.use('/attendance', attendanceRoutes);
+app.use('/timetables', timetableRoutes);
+app.use('/examinations', examinationRoutes);
+app.use('/fees', feeRoutes);
+app.use('/library', libraryRoutes);
+app.use('/notices', noticeRoutes);
+app.use('/analytics', analyticsRoutes);
+
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
     // Perform a lightweight query to ensure database is connected

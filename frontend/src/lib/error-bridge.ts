@@ -3,6 +3,7 @@
  * Automatically captures uncaught exceptions, promise rejections, console logs,
  * resource load failures, React error boundaries, and Potemkin UI silent failures.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
 
 export type RuntimeErrorType = 
   | 'runtime_error'

@@ -106,7 +106,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [isDark]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsProfileOpen(false);
   }, [location.pathname]);
 

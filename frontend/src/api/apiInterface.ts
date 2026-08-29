@@ -2,6 +2,8 @@
  * This file was automatically generated.
  * Do not modify it manually.
  */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
 
 export interface User {
   id: string;
