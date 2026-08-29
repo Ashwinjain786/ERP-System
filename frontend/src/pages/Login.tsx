@@ -51,7 +51,8 @@ export default function Login() {
         navigate(from, { replace: true });
       } else {
         const userRole = loggedInUser?.role || 'student';
-        navigate(`/${userRole}`, { replace: true });
+        const dashboardPath = userRole === 'librarian' ? '/library' : `/${userRole}`;
+        navigate(dashboardPath, { replace: true });
       }
     } catch (err: any) {
       setError('Invalid credentials. Please try again.');

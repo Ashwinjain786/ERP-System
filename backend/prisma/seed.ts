@@ -26,7 +26,20 @@ async function main() {
     },
   });
 
-  // 2. Department
+  // 2. Librarian User
+  const librarianPassword = await bcrypt.hash('librarian123', 10);
+  await prisma.user.upsert({
+    where: { email: 'librarian@campus.edu' },
+    update: {},
+    create: {
+      email: 'librarian@campus.edu',
+      name: 'Anita Sharma',
+      password: librarianPassword,
+      role: 'librarian',
+    },
+  });
+
+  // 3. Department
   const csDept = await prisma.department.upsert({
     where: { code: 'CSE' },
     update: {},
