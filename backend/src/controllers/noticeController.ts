@@ -1,24 +1,28 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import { NoticeTargetRole } from '@prisma/client';
 
 export const getNotices = async (req: Request, res: Response) => {
   try {
     const { targetRole, department } = req.query;
-    let whereClause: any = {};
+    const and: any[] = [];
     
     if (targetRole) {
-      whereClause.OR = [
-        { targetRole: targetRole as string },
-        { targetRole: 'all' }
-      ];
+      and.push({ OR: [
+        { targetRole: targetRole as NoticeTargetRole },
+        { targetRole: NoticeTargetRole.all }
+      ] });
     }
     
     if (department) {
-       whereClause.department = department; // in reality, might also include null (all depts)
+       and.push({ OR: [
+         { department: department as string },
+         { department: null }
+       ] });
     }
 
     const notices = await prisma.notice.findMany({
-      where: whereClause,
+      where: and.length ? { AND: and } : {},
       orderBy: { publishedAt: 'desc' }
     });
 
@@ -37,7 +41,7 @@ export const createNotice = async (req: Request, res: Response) => {
         title,
         content,
         category,
-        targetRole,
+        targetRole: (targetRole as NoticeTargetRole | undefined) || NoticeTargetRole.all,
         department,
         isUrgent,
         publishedBy: (req as any).user?.id

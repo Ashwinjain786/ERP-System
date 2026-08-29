@@ -54,10 +54,10 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-# startup: push schema → seed → start server
+# startup: apply tracked migrations → seed → repair library invariants → start server
 CMD ["sh", "-c", "\
-  echo '>>> Pushing Prisma schema...' && \
-  npx prisma db push && \
+  echo '>>> Applying Prisma migrations...' && \
+  npx prisma migrate deploy && \
   echo '>>> Seeding database...' && \
   npx ts-node --project tsconfig.json --transpile-only prisma/seed.ts && \
   echo '>>> Repairing and constraining library data...' && \

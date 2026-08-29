@@ -194,7 +194,7 @@ async function main() {
         content: 'The mid-semester examinations will be conducted from March 15-25, 2024. Students must carry their ID cards.',
         category: 'examination',
         targetRole: 'student',
-        publishedBy: 'System Admin',
+        publishedBy: admin.id,
         isUrgent: true
       }
     });
@@ -355,7 +355,7 @@ async function main() {
         content: 'TCS and Infosys will be conducting campus recruitment drives next month. Final year students must register by April 10.',
         category: 'general',
         targetRole: 'student',
-        publishedBy: 'Placement Cell',
+        publishedBy: admin.id,
         isUrgent: false
       }
     });
