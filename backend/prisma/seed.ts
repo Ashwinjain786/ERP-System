@@ -2,6 +2,11 @@ import prisma from '../src/config/db';
 import bcrypt from 'bcryptjs';
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL: Cannot run seed script in production!');
+    process.exit(1);
+  }
+  
   console.log('Seeding initial data...');
 
   const password = await bcrypt.hash('admin123', 10);
@@ -14,7 +19,7 @@ async function main() {
       email: 'admin@campus.edu',
       name: 'System Admin',
       password,
-      role: 'admin',
+      role: 'ADMIN',
     },
   });
 
@@ -37,7 +42,7 @@ async function main() {
       email: 'faculty@campus.edu',
       name: 'Dr. Jane Smith',
       password: facultyPassword,
-      role: 'faculty',
+      role: 'FACULTY',
       facultyProfile: {
         create: {
           employeeCode: 'FAC1001',
@@ -57,7 +62,7 @@ async function main() {
       email: 'student@campus.edu',
       name: 'John Doe',
       password: studentPassword,
-      role: 'student',
+      role: 'STUDENT',
       studentProfile: {
         create: {
           rollNumber: 'STU2024001',
