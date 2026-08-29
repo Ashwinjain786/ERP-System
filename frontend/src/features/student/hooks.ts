@@ -8,7 +8,8 @@ import {
   getStudentFees,
   getCourses,
   getTimetables,
-  getNotices
+  getNotices,
+  getStudentDocuments
 } from '@/api/apiCall';
 import type { Examination, CirculationRecord } from '@/api/apiInterface';
 
@@ -124,5 +125,19 @@ export function useExaminations() {
       const data = await getAllExaminations();
       return (data || []) as Examination[];
     },
+  });
+}
+
+export function useStudentDocuments() {
+  const { user } = useAuth();
+  const studentId = (user as any)?.studentProfile?.id;
+
+  return useQuery({
+    queryKey: ['student', 'documents', studentId],
+    queryFn: async () => {
+      if (!studentId) throw new Error('No student profile found');
+      return await getStudentDocuments({ id: studentId });
+    },
+    enabled: !!studentId,
   });
 }

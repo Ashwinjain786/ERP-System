@@ -4,6 +4,7 @@ import { FileText, Download, Clock, CheckCircle, AlertCircle, Printer, Mail, Fil
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useStudentDocuments } from '@/features/student/hooks';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -196,11 +197,19 @@ function RequestHistoryItem({ request }: { request: { id: string; documentName: 
   );
 }
 
-const requestsList: { id: string; documentName: string; status: 'completed' | 'pending' | 'processing'; requestedDate: string }[] = [];
 
 export default function StudentDocuments() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
+  
+  const { data: documents = [] } = useStudentDocuments();
+  
+  const requestsList = documents.map((doc: any) => ({
+    id: doc.id,
+    documentName: doc.documentName,
+    status: doc.status as 'completed' | 'pending' | 'processing',
+    requestedDate: new Date(doc.requestedAt).toLocaleDateString(),
+  }));
 
   return (
     <div className="min-h-screen bg-background">

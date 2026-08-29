@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFacultyProfile } from '@/features/faculty/hooks';
+import { useFacultyList, useCourses } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -18,8 +19,6 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-const facultyList: any[] = [];
-const courses: any[] = [];
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -31,6 +30,12 @@ export default function FacultyDepartment() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: profile } = useFacultyProfile();
+  const { data: allFaculty = [] } = useFacultyList();
+  const { data: allCourses = [] } = useCourses();
+  
+  // Filter by department name if profile is loaded
+  const facultyList = profile?.department ? allFaculty.filter(f => f.department === profile.department) : allFaculty;
+  const courses = profile?.department ? allCourses.filter(c => c.department === profile.department) : allCourses;
   
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -120,7 +125,7 @@ export default function FacultyDepartment() {
                   </div>
                   <div className="mt-3">
                     <span className="font-display text-3xl font-bold tracking-tight tabular-nums">
-                      {courses.reduce((acc, c) => acc + c.students, 0)}
+                      {courses.length}
                     </span>
                   </div>
                 </CardContent>
@@ -136,7 +141,7 @@ export default function FacultyDepartment() {
                   </div>
                   <div className="mt-3">
                     <span className="font-display text-3xl font-bold tracking-tight tabular-nums">
-                      {facultyList.length > 0 ? Math.round(facultyList.reduce((acc, f) => acc + f.workload, 0) / facultyList.length) : 0}h
+                      {facultyList.length > 0 ? Math.round(facultyList.reduce((acc, f) => acc + (f.weeklyWorkloadHours ?? 0), 0) / facultyList.length) : 0}h
                     </span>
                   </div>
                 </CardContent>
@@ -165,8 +170,8 @@ export default function FacultyDepartment() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium text-foreground">{faculty.workload}h</p>
-                          <p className="text-xs text-muted-foreground">{faculty.courses} courses</p>
+                          <p className="text-sm font-medium text-foreground">{faculty.weeklyWorkloadHours ?? 0}h</p>
+                           <p className="text-xs text-muted-foreground">{faculty.department}</p>
                         </div>
                       </div>
                     ))}

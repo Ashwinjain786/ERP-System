@@ -17,20 +17,40 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-const classesList: any[] = [];
-const studentsList: any[] = [];
+
 
 export default function FacultyAttendance() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const { data: workload } = useFacultyWorkload();
+  const { data: workload = [] } = useFacultyWorkload();
+  const { data: studentsList = [] } = useFacultyStudents();
   
-  const [selectedClass, setSelectedClass] = useState<string>(classesList[0]?.id || '');
-  const [attendance, setAttendance] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    studentsList.forEach(s => { initial[s.id] = s.status || 'present'; });
-    return initial;
-  });
+  const classesList = workload.map((w: any) => ({
+    id: w.id,
+    courseName: w.course?.name || 'Unknown Course',
+    section: w.section,
+    time: w.timeSlot,
+    date: w.dayOfWeek,
+  }));
+  
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [attendance, setAttendance] = useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    if (classesList.length > 0 && !selectedClass) {
+      setSelectedClass(classesList[0].id);
+    }
+  }, [classesList, selectedClass]);
+
+  React.useEffect(() => {
+    if (studentsList.length > 0) {
+      const initial: Record<string, string> = {};
+      studentsList.forEach((s: any) => {
+        initial[s.id] = 'present';
+      });
+      setAttendance(initial);
+    }
+  }, [studentsList]);
 
   const handleToggle = (studentId: string) => {
     setAttendance(prev => ({
@@ -49,7 +69,7 @@ export default function FacultyAttendance() {
 
   const currentClass = classesList.find(c => c.id === selectedClass);
   const presentCount = Object.values(attendance).filter(s => s === 'present').length;
-  const totalCount = studentsList.length;
+  const totalCount = Object.keys(attendance).length;
 
   return (
     <div className="min-h-screen bg-background">

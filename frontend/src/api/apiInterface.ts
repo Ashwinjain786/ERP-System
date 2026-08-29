@@ -482,6 +482,21 @@ export interface GetStudentFeesInput {
   id: string;
 }
 
+export interface DocumentRequestResponse {
+  id: string;
+  studentId: string;
+  documentName: string;
+  status: string;
+  requestedAt: string;
+  updatedAt: string;
+}
+
+export type GetStudentDocumentsOutput = DocumentRequestResponse[];
+
+export interface GetStudentDocumentsInput {
+  id: string;
+}
+
 export type GetFacultyListOutput = Faculty[];
 
 export interface GetFacultyListInput {
@@ -720,6 +735,11 @@ export interface CampusOneCollegeERPPlatformAPI {
     description: "Get student fee dues, ledger, and payment receipts";
     input: GetStudentFeesInput;
     response: GetStudentFeesOutput;
+  };
+  getStudentDocuments: {
+    description: "Get student document requests";
+    input: GetStudentDocumentsInput;
+    response: GetStudentDocumentsOutput;
   };
   getFacultyList: {
     description: "List all faculty and staff members";

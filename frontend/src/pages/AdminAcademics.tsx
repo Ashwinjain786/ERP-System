@@ -21,8 +21,7 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-const programs: any[] = [];
-const degrees: any[] = [];
+
 function TableSkeleton() {
   return (
     <div className="space-y-3">
@@ -46,7 +45,7 @@ function getCourseTypeColor(type?: string) {
 export default function AdminAcademics() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const [activeTab, setActiveTab] = useState<'programs' | 'degrees' | 'courses'>('programs');
+  const [activeTab, setActiveTab] = useState<'courses'>('courses');
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: courses, isLoading: coursesLoading } = useCourses();
@@ -57,12 +56,7 @@ export default function AdminAcademics() {
       c.code.toLowerCase().includes(searchQuery.toLowerCase());
   }) || [];
   
-  const filteredPrograms = programs.filter((p: any) => p.name?.toLowerCase().includes(searchQuery.toLowerCase()));
-  const filteredDegrees = degrees.filter((d: any) => d.name?.toLowerCase().includes(searchQuery.toLowerCase()));
-
   const tabs = [
-    { id: 'programs', label: 'Programs', icon: GraduationCap },
-    { id: 'degrees', label: 'Degrees', icon: Award },
     { id: 'courses', label: 'Courses', icon: BookOpen },
   ] as const;
 
@@ -88,28 +82,6 @@ export default function AdminAcademics() {
               </div>
             </Wrapper>
 
-            <Wrapper variants={item}>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Card className="border-2 border-border/60 bg-card">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-muted-foreground">Total Programs</p>
-                    <p className="font-display text-2xl font-bold tabular-nums">{programs.length}</p>
-                  </CardContent>
-                </Card>
-                <Card className="border-2 border-border/60 bg-card">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-muted-foreground">Degrees Offered</p>
-                    <p className="font-display text-2xl font-bold tabular-nums">{degrees.length}</p>
-                  </CardContent>
-                </Card>
-                <Card className="border-2 border-border/60 bg-card">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-muted-foreground">Active Courses</p>
-                    <p className="font-display text-2xl font-bold tabular-nums">{courses?.length || 0}</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </Wrapper>
           </Wrapper>
         </div>
       </div>
@@ -133,117 +105,7 @@ export default function AdminAcademics() {
           ))}
         </div>
 
-        {activeTab === 'programs' && (
-          <Card className="border-2 border-border/60">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg font-display">Academic Programs</CardTitle>
-                  <CardDescription>All offered degree programs</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Wrapper variants={container} initial="hidden" animate="show">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredPrograms.map((program: any) => (
-                    <motion.div
-                      key={program.id}
-                      variants={item}
-                      className="p-4 rounded-xl border-2 border-border/60 bg-card hover:border-primary/30 hover:shadow-md transition-all"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-display font-semibold text-lg">{program.name}</h3>
-                          <p className="text-sm text-muted-foreground">{program.duration}</p>
-                        </div>
-                        <div className="p-2 rounded-lg bg-violet-100">
-                          <GraduationCap className="w-5 h-5 text-violet-600" />
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <Users className="w-4 h-4" />
-                          <span>{program.seats} seats</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {program.departments.slice(0, 3).map((dept: any, i: number) => (
-                          <span key={i} className="px-2 py-0.5 rounded bg-secondary text-xs">{dept}</span>
-                        ))}
-                        {program.departments.length > 3 && (
-                          <span className="px-2 py-0.5 rounded bg-secondary text-xs">+{program.departments.length - 3}</span>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </Wrapper>
-            </CardContent>
-          </Card>
-        )}
 
-        {activeTab === 'degrees' && (
-          <Card className="border-2 border-border/60">
-            <CardHeader className="pb-4">
-              <div>
-                <CardTitle className="text-lg font-display">Degree Catalog</CardTitle>
-                <CardDescription>All recognized degrees</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Wrapper variants={container} initial="hidden" animate="show">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-border/60">
-                        <th className="text-left pb-3 px-2 text-sm font-semibold text-muted-foreground">Abbreviation</th>
-                        <th className="text-left pb-3 px-2 text-sm font-semibold text-muted-foreground">Degree Name</th>
-                        <th className="text-left pb-3 px-2 text-sm font-semibold text-muted-foreground">Level</th>
-                        <th className="text-right pb-3 px-2 text-sm font-semibold text-muted-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredDegrees.map((degree: any) => (
-                        <motion.tr
-                          key={degree.id}
-                          variants={item}
-                          className="border-b border-border/40 hover:bg-muted/30 transition-colors"
-                        >
-                          <td className="py-3 px-2">
-                            <span className="font-display font-semibold text-primary">{degree.abbreviation}</span>
-                          </td>
-                          <td className="py-3 px-2">{degree.name}</td>
-                          <td className="py-3 px-2">
-                            <span className={cn(
-                              "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium",
-                              degree.level === 'Undergraduate' ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'
-                            )}>
-                              {degree.level}
-                            </span>
-                          </td>
-                          <td className="py-3 px-2 text-right">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Wrapper>
-            </CardContent>
-          </Card>
-        )}
 
         {activeTab === 'courses' && (
           <Card className="border-2 border-border/60">

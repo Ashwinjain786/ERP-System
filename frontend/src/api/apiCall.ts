@@ -25,6 +25,8 @@ import {
   GetStudentGradesOutput,
   GetStudentFeesInput,
   GetStudentFeesOutput,
+  GetStudentDocumentsInput,
+  GetStudentDocumentsOutput,
   GetFacultyListInput,
   GetFacultyListOutput,
   CreateFacultyInput,
@@ -353,6 +355,18 @@ export const getStudentFees = async (input: GetStudentFeesInput): Promise<GetStu
     operationId: 'getStudentFees',
     method: 'GET',
     path: '/students/{id}/fees',
+    input: input,
+    pathParams: ["id"],
+    queryParams: [],
+    headerParams: []
+  });
+};
+
+export const getStudentDocuments = async (input: GetStudentDocumentsInput): Promise<GetStudentDocumentsOutput> => {
+  return request<GetStudentDocumentsOutput>({
+    operationId: 'getStudentDocuments',
+    method: 'GET',
+    path: '/students/{id}/documents',
     input: input,
     pathParams: ["id"],
     queryParams: [],
