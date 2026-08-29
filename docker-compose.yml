@@ -24,6 +24,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_URL=postgresql://erp_user:erp_password@db:5432/erp_db?schema=public
+      - JWT_SECRET=super_secure_jwt_secret_123
     depends_on:
       - db
     networks:
