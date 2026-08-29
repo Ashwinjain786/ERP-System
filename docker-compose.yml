@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: erp_db
+    restart: always
+    environment:
+      POSTGRES_USER: erp_user
+      POSTGRES_PASSWORD: erp_password
+      POSTGRES_DB: erp_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - erp_network
+
+  api:
+    build: 
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: erp_api
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://erp_user:erp_password@db:5432/erp_db?schema=public
+    depends_on:
+      - db
+    networks:
+      - erp_network
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: erp_web
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - erp_network
+
+networks:
+  erp_network:
+    driver: bridge
+
+volumes:
+  pgdata:
