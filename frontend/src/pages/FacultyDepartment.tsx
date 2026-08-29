@@ -18,19 +18,8 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-const MOCK_FACULTY = [
-  { id: 'f1', name: 'Dr. Priya Menon', email: 'priya.menon@campusone.edu', phone: '+91 98765 43210', designation: 'Associate Professor', qualification: 'Ph.D. in CS', courses: 2, workload: 14 },
-  { id: 'f2', name: 'Prof. Rajesh Kumar', email: 'rajesh.kumar@campusone.edu', phone: '+91 98765 43211', designation: 'Professor', qualification: 'Ph.D. in CS', courses: 3, workload: 16 },
-  { id: 'f3', name: 'Dr. Anjali Sharma', email: 'anjali.sharma@campusone.edu', phone: '+91 98765 43212', designation: 'Assistant Professor', qualification: 'Ph.D. in CS', courses: 2, workload: 12 },
-  { id: 'f4', name: 'Prof. Suresh Reddy', email: 'suresh.reddy@campusone.edu', phone: '+91 98765 43213', designation: 'Associate Professor', qualification: 'M.Tech', courses: 2, workload: 14 },
-];
-
-const MOCK_COURSES = [
-  { code: 'CS301', name: 'Database Management Systems', semester: 4, students: 125, faculty: 'Dr. Priya Menon' },
-  { code: 'CS305', name: 'Web Development Lab', semester: 4, students: 30, faculty: 'Dr. Priya Menon' },
-  { code: 'CS401', name: 'Operating Systems', semester: 6, students: 90, faculty: 'Prof. Rajesh Kumar' },
-  { code: 'CS403', name: 'Computer Networks', semester: 6, students: 85, faculty: 'Dr. Anjali Sharma' },
-];
+const facultyList: any[] = [];
+const courses: any[] = [];
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -46,9 +35,9 @@ export default function FacultyDepartment() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredFaculty = MOCK_FACULTY.filter(f => 
-    f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.designation.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFaculty = facultyList.filter((f: any) => 
+    f.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.designation?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -102,7 +91,7 @@ export default function FacultyDepartment() {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{MOCK_FACULTY.length}</span>
+                    <p className="font-display text-2xl font-bold tabular-nums">{facultyList.length}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -116,7 +105,7 @@ export default function FacultyDepartment() {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{MOCK_COURSES.length}</span>
+                    <p className="font-display text-2xl font-bold tabular-nums">{courses.length}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -131,7 +120,7 @@ export default function FacultyDepartment() {
                   </div>
                   <div className="mt-3">
                     <span className="font-display text-3xl font-bold tracking-tight tabular-nums">
-                      {MOCK_COURSES.reduce((acc, c) => acc + c.students, 0)}
+                      {courses.reduce((acc, c) => acc + c.students, 0)}
                     </span>
                   </div>
                 </CardContent>
@@ -147,7 +136,7 @@ export default function FacultyDepartment() {
                   </div>
                   <div className="mt-3">
                     <span className="font-display text-3xl font-bold tracking-tight tabular-nums">
-                      {Math.round(MOCK_FACULTY.reduce((acc, f) => acc + f.workload, 0) / MOCK_FACULTY.length)}h
+                      {facultyList.length > 0 ? Math.round(facultyList.reduce((acc, f) => acc + f.workload, 0) / facultyList.length) : 0}h
                     </span>
                   </div>
                 </CardContent>
@@ -162,12 +151,12 @@ export default function FacultyDepartment() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {MOCK_FACULTY.map((faculty) => (
+                    {facultyList.map((faculty) => (
                       <div key={faculty.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <span className="text-sm font-semibold text-primary">
-                              {faculty.name.split(' ').map(n => n[0]).join('')}
+                              {faculty.name?.split(' ').map((n: string) => n[0]).join('')}
                             </span>
                           </div>
                           <div>
@@ -193,11 +182,11 @@ export default function FacultyDepartment() {
                 <CardContent>
                   <div className="space-y-3">
                     {[4, 6].map(semester => {
-                      const semCourses = MOCK_COURSES.filter(c => c.semester === semester);
+                      const semCourses = courses.filter(c => c.semester === semester);
                       return (
                         <div key={semester} className="space-y-2">
                           <p className="text-sm font-medium text-muted-foreground">Semester {semester}</p>
-                          {semCourses.map(course => (
+                          {semCourses.map((course: any) => (
                             <div key={course.code} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                               <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-lg bg-violet-500/10">
@@ -242,7 +231,7 @@ export default function FacultyDepartment() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {filteredFaculty.map((faculty) => (
+                {filteredFaculty.map((faculty: any) => (
                   <div
                     key={faculty.id}
                     className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border-2 border-transparent hover:border-primary/20"
@@ -250,7 +239,7 @@ export default function FacultyDepartment() {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <span className="text-sm font-semibold text-primary">
-                          {faculty.name.split(' ').map(n => n[0]).join('')}
+                          {faculty.name?.split(' ').map((n: string) => n[0]).join('')}
                         </span>
                       </div>
                       <div>
@@ -303,12 +292,12 @@ export default function FacultyDepartment() {
             <CardContent>
               <div className="space-y-4">
                 {[4, 6].map(semester => {
-                  const semCourses = MOCK_COURSES.filter(c => c.semester === semester);
+                  const semCourses = courses.filter((c: any) => c.semester === semester);
                   return (
                     <div key={semester} className="space-y-3">
-                      <h3 className="font-display text-lg font-semibold">Semester {semester}</h3>
+                      <h3 className="font-semibold text-foreground">Semester {semester}</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        {semCourses.map(course => (
+                        {semCourses.map((course: any) => (
                           <div
                             key={course.code}
                             className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border-2 border-transparent hover:border-primary/20"

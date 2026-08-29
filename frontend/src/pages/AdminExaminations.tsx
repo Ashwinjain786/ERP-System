@@ -22,11 +22,6 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-const MOCK_EXAM_DUTIES = [
-  { id: 'duty-001', examinerName: 'Dr. Priya Menon', subject: 'Database Management Systems', date: '2024-03-15', session: 'Forenoon', room: 'CS-301', students: 60 },
-  { id: 'duty-002', examinerName: 'Prof. Rajesh Kumar', subject: 'Operating Systems', date: '2024-03-15', session: 'Afternoon', room: 'CS-302', students: 58 },
-  { id: 'duty-003', examinerName: 'Dr. Ankit Sharma', subject: 'Computer Networks', date: '2024-03-16', session: 'Forenoon', room: 'IT-201', students: 55 },
-];
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -255,7 +250,7 @@ export default function AdminExaminations() {
                       </tr>
                     </thead>
                     <tbody>
-                      {MOCK_EXAM_DUTIES.map((duty) => (
+                      {[] /* Removed MOCK_EXAM_DUTIES */ .map((duty: any) => (
                         <motion.tr
                           key={duty.id}
                           variants={item}

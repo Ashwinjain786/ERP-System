@@ -33,14 +33,24 @@ const TIME_SLOTS = [
   { period: 7, time: '03:20 - 04:15' },
 ];
 
-const MOCK_TIMETABLE = [
-  { id: 't1', day: 'Monday', period: 1, subject: 'Database Management Systems', faculty: 'Dr. Priya Menon', room: 'CS-LAB-1' },
-  { id: 't2', day: 'Monday', period: 2, subject: 'Operating Systems', faculty: 'Prof. Rajesh Kumar', room: 'CS-301' },
-  { id: 't3', day: 'Tuesday', period: 1, subject: 'Computer Networks', faculty: 'Dr. Ankit Sharma', room: 'CS-302' },
-  { id: 't4', day: 'Tuesday', period: 2, subject: 'Software Engineering', faculty: 'Ms. Kavita Iyer', room: 'CS-303' },
-  { id: 't5', day: 'Wednesday', period: 1, subject: 'Database Management Systems', faculty: 'Dr. Priya Menon', room: 'CS-LAB-1' },
-  { id: 't6', day: 'Wednesday', period: 3, subject: 'Operating Systems', faculty: 'Prof. Rajesh Kumar', room: 'CS-301' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { apiConfig } from '@/api/apiCall';
+
+function useTimetables() {
+  return useQuery({
+    queryKey: ['admin', 'timetables'],
+    queryFn: async () => {
+      const res = await fetch(`${apiConfig.baseUrl}/timetable/all`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...apiConfig.headers,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch timetables');
+      return res.json();
+    },
+  });
+}
 
 export default function AdminTimetableBuilder() {
   const reduceMotion = useReducedMotion();
@@ -51,9 +61,12 @@ export default function AdminTimetableBuilder() {
 
   const { data: courses } = useCourses();
   const { data: departments } = useDepartments();
+  const { data: timetablesData } = useTimetables();
+  
+  const timetables = Array.isArray(timetablesData) ? timetablesData : [];
 
   const getEntry = (day: string, period: number) => {
-    return MOCK_TIMETABLE.find(e => e.day === day && e.period === period);
+    return timetables.find((e: any) => e.day === day && e.period === period);
   };
 
   return (

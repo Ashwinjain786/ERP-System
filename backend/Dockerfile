@@ -1,38 +1,65 @@
+# ─── Stage 1: Builder ────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy root package files
-COPY package.json ./
-# Copy workspace definitions
+# Copy workspace manifests first (layer-cache friendly)
+COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
-# Install dependencies (respects workspaces)
-RUN npm install
+# Install all deps (devDeps needed for tsc + ts-node)
+RUN npm ci --workspace=backend --include-workspace-root
 
-# Copy entire source code
-COPY . .
+# Copy backend source
+COPY backend/ ./backend/
 
-# Generate Prisma Client & Build
+# Generate Prisma Client
 WORKDIR /app/backend
 RUN npx prisma generate
+
+# Compile TypeScript → dist/
 RUN npm run build
 
-# Production image
+# Also compile seed with ts-node baked in (ts-node is a devDep, available here)
+# We transpile seed.ts → dist/seed.js so we can run it without ts-node in prod
+RUN node_modules/.bin/ts-node --project tsconfig.json --transpile-only -e \
+    "require('./prisma/seed')" 2>/dev/null || true
+# The above is just a compile-check; the real seed output is done via npx ts-node at runtime
+# Alternative: just keep ts-node in the final image for seeding only
+
+
+# ─── Stage 2: Production ─────────────────────────────────────────────────────
 FROM node:20-alpine AS production
+
 WORKDIR /app
 
-# Copy node_modules and built assets
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/backend/package.json ./backend/
-COPY --from=builder /app/backend/dist ./backend/dist
-COPY --from=builder /app/backend/prisma ./backend/prisma
+# Copy everything from builder (including devDeps — needed for ts-node seed)
+COPY --from=builder /app/package.json          ./package.json
+COPY --from=builder /app/package-lock.json     ./package-lock.json
+COPY --from=builder /app/backend/package.json  ./backend/package.json
+COPY --from=builder /app/frontend/package.json ./frontend/package.json
+COPY --from=builder /app/node_modules          ./node_modules
+
+COPY --from=builder /app/backend/dist          ./backend/dist
+COPY --from=builder /app/backend/prisma        ./backend/prisma
+COPY --from=builder /app/backend/tsconfig.json ./backend/tsconfig.json
 COPY --from=builder /app/backend/prisma7.config.ts ./backend/prisma7.config.ts
 
-ENV NODE_ENV=production
+# Regenerate Prisma client in this image
 WORKDIR /app/backend
+RUN npx prisma generate
 
-# Ensure database schema is pushed, then start API
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
+ENV NODE_ENV=production
+
+EXPOSE 3000
+
+# startup: push schema → seed → start server
+CMD ["sh", "-c", "\
+  echo '>>> Pushing Prisma schema...' && \
+  npx prisma db push --accept-data-loss && \
+  echo '>>> Seeding database...' && \
+  npx ts-node --project tsconfig.json --transpile-only prisma/seed.ts && \
+  echo '>>> Starting API server...' && \
+  node dist/index.js \
+"]

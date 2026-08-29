@@ -48,19 +48,22 @@ import noticeRoutes from './routes/noticeRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import adminRoutes from './routes/adminRoutes';
 
-app.use('/auth', authRoutes);
-app.use('/students', studentRoutes);
-app.use('/faculty', facultyRoutes);
-app.use('/departments', departmentRoutes);
-app.use('/courses', courseRoutes);
-app.use('/attendance', attendanceRoutes);
-app.use('/timetables', timetableRoutes);
-app.use('/examinations', examinationRoutes);
-app.use('/fees', feeRoutes);
-app.use('/library', libraryRoutes);
-app.use('/notices', noticeRoutes);
-app.use('/analytics', analyticsRoutes);
-app.use('/admin', adminRoutes);
+const apiRouter = express.Router();
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/students', studentRoutes);
+apiRouter.use('/faculty', facultyRoutes);
+apiRouter.use('/departments', departmentRoutes);
+apiRouter.use('/courses', courseRoutes);
+apiRouter.use('/attendance', attendanceRoutes);
+apiRouter.use('/timetables', timetableRoutes);
+apiRouter.use('/examinations', examinationRoutes);
+apiRouter.use('/fees', feeRoutes);
+apiRouter.use('/library', libraryRoutes);
+apiRouter.use('/notices', noticeRoutes);
+apiRouter.use('/analytics', analyticsRoutes);
+apiRouter.use('/admin', adminRoutes);
+
+app.use('/api', apiRouter);
 
 app.get('/api/health', async (req: Request, res: Response) => {
   try {

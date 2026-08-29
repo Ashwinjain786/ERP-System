@@ -18,11 +18,8 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-const MOCK_LEAVE_REQUESTS = [
-  { id: '1', type: 'Casual Leave', fromDate: '2024-03-15', toDate: '2024-03-17', days: 3, reason: 'Personal work', status: 'approved' },
-  { id: '2', type: 'Sick Leave', fromDate: '2024-02-28', toDate: '2024-02-28', days: 1, reason: 'Medical appointment', status: 'approved' },
-  { id: '3', type: 'Casual Leave', fromDate: '2024-04-10', toDate: '2024-04-12', days: 3, reason: 'Family function', status: 'pending' },
-];
+import { getFacultyLeaves } from '@/api/customApi';
+import { useQuery } from '@tanstack/react-query';
 
 const LEAVE_TYPES = ['Casual Leave', 'Sick Leave', 'Earned Leave', 'Maternity Leave', 'Paternity Leave'];
 
@@ -30,6 +27,11 @@ export default function FacultyLeaves() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: profile } = useFacultyProfile();
+  const { data: leavesData } = useQuery({
+    queryKey: ['faculty', 'leaves'],
+    queryFn: getFacultyLeaves,
+  });
+  const leaves = Array.isArray(leavesData) ? leavesData : [];
   
   const [showForm, setShowForm] = useState(false);
   const [leaveType, setLeaveType] = useState('');
@@ -104,9 +106,7 @@ export default function FacultyLeaves() {
                 </div>
               </div>
               <div className="mt-3">
-                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">
-                  {MOCK_LEAVE_REQUESTS.filter(l => l.status === 'approved').reduce((acc, l) => acc + l.days, 0)}
-                </span>
+                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{leaves.filter((l: any) => l.status === 'approved').reduce((acc: number, l: any) => acc + (l.days || 0), 0)}</span>
                 <span className="text-sm text-muted-foreground ml-2">days</span>
               </div>
             </CardContent>
@@ -121,9 +121,7 @@ export default function FacultyLeaves() {
                 </div>
               </div>
               <div className="mt-3">
-                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">
-                  {MOCK_LEAVE_REQUESTS.filter(l => l.status === 'pending').reduce((acc, l) => acc + l.days, 0)}
-                </span>
+                <span className="font-display text-3xl font-bold tracking-tight tabular-nums text-warning">{leaves.filter((l: any) => l.status === 'pending').reduce((acc: number, l: any) => acc + (l.days || 0), 0)}</span>
                 <span className="text-sm text-muted-foreground ml-2">days</span>
               </div>
             </CardContent>
@@ -138,9 +136,7 @@ export default function FacultyLeaves() {
                 </div>
               </div>
               <div className="mt-3">
-                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">
-                  {MOCK_LEAVE_REQUESTS.filter(l => l.status !== 'rejected').reduce((acc, l) => acc + l.days, 0)}
-                </span>
+                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{leaves.filter((l: any) => l.status !== 'rejected').reduce((acc: number, l: any) => acc + (l.days || 0), 0)}</span>
                 <span className="text-sm text-muted-foreground ml-2">days</span>
               </div>
             </CardContent>
@@ -232,7 +228,7 @@ export default function FacultyLeaves() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {MOCK_LEAVE_REQUESTS.map((leave) => (
+              {leaves.map((leave: any, idx: number) => (
                 <div
                   key={leave.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border-2 border-transparent hover:border-primary/20"

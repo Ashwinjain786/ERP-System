@@ -1,52 +1,89 @@
-# ERP System Monorepo
+# ERP System — Campus Management Platform
 
-Welcome to the ERP System Monorepo! This repository contains both the frontend React application and the backend Node.js Express API.
+A full-stack ERP system for campus management built with **React + Vite** (frontend) and **Node.js + Express + Prisma + PostgreSQL** (backend).
 
-## 🚀 Quick Start
+## 🚀 One-Command Docker Launch
 
-Ensure you have Node.js (v18+) installed.
+> **Prerequisite**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) must be installed and running.
 
-1. **Install Dependencies:**
-   Run the following from the root directory to install all dependencies for both frontend and backend using `npm workspaces`:
-   ```bash
-   npm install
-   ```
+```bash
+docker compose up --build
+```
 
-2. **Start Development Servers:**
-   To run both the Vite frontend and the Nodemon backend simultaneously:
-   ```bash
-   npm run dev
-   ```
-   - Frontend runs on: `http://localhost:5173`
-   - Backend API runs on: `http://localhost:3000`
+Then open your browser at: **http://localhost:8080**
 
-## 📁 Repository Structure
+---
 
-- `frontend/`: React, Vite, TailwindCSS, Radix UI.
-- `backend/`: Node.js, Express, TypeScript.
+## 🔑 Default Login Credentials (seeded automatically)
 
-## 🔒 Production Readiness
+| Role    | Email                   | Password     |
+|---------|-------------------------|--------------|
+| Admin   | admin@campus.edu        | admin123     |
+| Faculty | faculty@campus.edu      | faculty123   |
+| Student | student@campus.edu      | student123   |
+| Student | priya@campus.edu        | student123   |
 
-This repository has been audited and configured for strict production standards:
+---
 
-### Backend Security
-- **Helmet:** Configured to secure HTTP headers.
-- **Express-Rate-Limit:** Protects against brute-force attacks (100 req / 15 mins).
-- **CORS:** Strictly limited to the frontend URL.
-- **Morgan:** Structured HTTP request logging.
-- **Centralized Error Handling:** Errors in production are sanitized to prevent leaking stack traces.
-- **Environment Validation:** Startup checks to ensure all necessary environment variables are set.
+## 🏗️ Architecture
 
-### Frontend Optimization
-- **Vite Code Splitting:** `manualChunks` is configured to separate vendor libraries (React, UI components) from application code for optimized caching.
+```
+Browser → http://localhost:8080
+         │
+         ▼
+   [Nginx / React SPA]  :80
+         │ /api/* proxy
+         ▼
+   [Express API]        :3000
+         │
+         ▼
+   [PostgreSQL]         :5432
+```
 
-## 📜 Available Scripts (Root)
+### Services (docker-compose)
+| Service | Container    | Purpose                         |
+|---------|--------------|---------------------------------|
+| `db`    | `erp_db`     | PostgreSQL 16 database          |
+| `api`   | `erp_api`    | Node.js / Express REST API      |
+| `web`   | `erp_web`    | React SPA served via Nginx      |
 
-- `npm run dev`: Starts both servers.
-- `npm run build`: Compiles both frontend and backend.
-- `npm run install:all`: Fresh install of all workspace dependencies.
+### Startup Order
+1. **db** starts → healthcheck confirms it's ready
+2. **api** starts → runs `prisma db push` + `seed.ts` → starts Express
+3. **web** starts → serves static SPA, proxies `/api` to **api**
 
-## 🛠️ API Documentation
+---
 
-Currently available endpoints:
-- `GET /api/health`: Returns the health status of the backend API.
+## 🛠️ Development (without Docker)
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Set up backend .env
+# Edit backend/.env with your local PostgreSQL connection string
+
+# 3. Run migrations + seed
+cd backend
+npx prisma db push
+npx ts-node prisma/seed.ts
+
+# 4. Start both servers (from root)
+npm run dev
+```
+
+Frontend runs at `http://localhost:5173`  
+Backend runs at `http://localhost:3000`
+
+---
+
+## 📦 Departments & Features
+
+| Department  | Pages                                          |
+|-------------|------------------------------------------------|
+| Admin       | Dashboard, Students, Faculty, Admissions, Roles, Notices, Examinations, Academics, Timetable |
+| Faculty     | Dashboard, Classes, Attendance, Grading, Leaves, Department |
+| Student     | Dashboard, Courses, Attendance, Exams, Fees, Library, Documents, Timetable |
+| Library     | Catalog, Circulation, Fines                    |
+| Finance     | Structures, Transactions, Dues, Reports        |
+| Analytics   | Overview, Admissions, Academic Performance, Placement, Financial Health |

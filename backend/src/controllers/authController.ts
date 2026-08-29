@@ -76,6 +76,8 @@ export const getCurrentUser = async (req: Request, res: Response) => {
         role: true,
         avatarUrl: true,
         phone: true,
+        studentProfile: { select: { id: true, rollNumber: true } },
+        facultyProfile: { select: { id: true, employeeCode: true } }
       }
     });
 

@@ -12,7 +12,10 @@ import { Toaster } from 'sonner';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import { router } from './app/router.generated';
+import { setApiConfig } from './api/apiCall';
 import './index.css';
+
+setApiConfig({ baseUrl: '/api' });
 
 const queryClient = new QueryClient({
   defaultOptions: {

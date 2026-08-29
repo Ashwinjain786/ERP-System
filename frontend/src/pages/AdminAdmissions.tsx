@@ -20,23 +20,24 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-const MOCK_ADMISSIONS = [
-  { id: 'adm-001', applicantName: 'Aryan Sharma', applicationId: 'APP2024001', program: 'B.Tech', department: 'Computer Science', jeeRank: 1250, category: 'General', status: 'approved', appliedDate: '2024-02-15', quota: 'JEE' },
-  { id: 'adm-002', applicantName: 'Priya Singh', applicationId: 'APP2024002', program: 'B.Tech', department: 'Information Technology', jeeRank: 3400, category: 'OBC', status: 'approved', appliedDate: '2024-02-16', quota: 'JEE' },
-  { id: 'adm-003', applicantName: 'Rahul Verma', applicationId: 'APP2024003', program: 'B.Tech', department: 'Mechanical Engineering', jeeRank: 5600, category: 'General', status: 'pending', appliedDate: '2024-02-18', quota: 'JEE' },
-  { id: 'adm-004', applicantName: 'Sneha Reddy', applicationId: 'APP2024004', program: 'B.Tech', department: 'Electrical Engineering', jeeRank: 2100, category: 'SC', status: 'approved', appliedDate: '2024-02-17', quota: 'JEE' },
-  { id: 'adm-005', applicantName: 'Vikram Singh', applicationId: 'APP2024005', program: 'M.Tech', department: 'Computer Science', gateRank: 450, category: 'General', status: 'pending', appliedDate: '2024-02-19', quota: 'GATE' },
-  { id: 'adm-006', applicantName: 'Ankit Patel', applicationId: 'APP2024006', program: 'B.Tech', department: 'Civil Engineering', jeeRank: 8900, category: 'ST', status: 'rejected', appliedDate: '2024-02-14', quota: 'JEE' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { apiConfig } from '@/api/apiCall';
 
-const MOCK_STATS = {
-  totalApplications: 1250,
-  approved: 680,
-  pending: 420,
-  rejected: 150,
-  acceptanceRate: 54.4,
-  avgJeeRank: 4500,
-};
+function useAdmissions() {
+  return useQuery({
+    queryKey: ['admin', 'admissions'],
+    queryFn: async () => {
+      const res = await fetch(`${apiConfig.baseUrl}/admin/admissions`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...apiConfig.headers,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch admissions');
+      return res.json();
+    },
+  });
+}
 
 function TableSkeleton() {
   return (
@@ -63,18 +64,30 @@ export default function AdminAdmissions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const filteredAdmissions = MOCK_ADMISSIONS.filter(app => {
-    const matchesSearch = app.applicantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.applicationId.toLowerCase().includes(searchQuery.toLowerCase());
+  const { data: admissionsData, isLoading, isError } = useAdmissions();
+  
+  const applications = Array.isArray(admissionsData) ? admissionsData : [];
+
+  const filteredAdmissions = applications.filter((app: any) => {
+    const matchesSearch = app.applicantName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.applicationId?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = !statusFilter || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  const stats = {
+    totalApplications: applications.length,
+    approved: applications.filter((app: any) => app.status === 'approved').length,
+    pending: applications.filter((app: any) => app.status === 'pending').length,
+    rejected: applications.filter((app: any) => app.status === 'rejected').length,
+  };
+  const acceptanceRate = stats.totalApplications > 0 ? ((stats.approved / stats.totalApplications) * 100).toFixed(1) : '0.0';
+
   const statCards = [
-    { label: 'Total Applications', value: MOCK_STATS.totalApplications, icon: Users, color: 'bg-info', subtext: '+12% from last year' },
-    { label: 'Approved', value: MOCK_STATS.approved, icon: CheckCircle, color: 'bg-success', subtext: `${((MOCK_STATS.approved / MOCK_STATS.totalApplications) * 100).toFixed(1)}% acceptance` },
-    { label: 'Pending Review', value: MOCK_STATS.pending, icon: Clock, color: 'bg-warning', subtext: 'Requires action' },
-    { label: 'Rejected', value: MOCK_STATS.rejected, icon: XCircle, color: 'bg-destructive', subtext: 'Below criteria' },
+    { label: 'Total Applications', value: stats.totalApplications, icon: Users, color: 'bg-info', subtext: '+12% from last year' },
+    { label: 'Approved', value: stats.approved, icon: CheckCircle, color: 'bg-success', subtext: `${acceptanceRate}% acceptance` },
+    { label: 'Pending Review', value: stats.pending, icon: Clock, color: 'bg-warning', subtext: 'Requires action' },
+    { label: 'Rejected', value: stats.rejected, icon: XCircle, color: 'bg-destructive', subtext: 'Below criteria' },
   ];
 
   return (
@@ -133,7 +146,7 @@ export default function AdminAdmissions() {
                         <CardDescription>Overall admission conversion</CardDescription>
                       </div>
                     </div>
-                    <span className="font-display text-3xl font-bold text-success">{MOCK_STATS.acceptanceRate}%</span>
+                    <span className="font-display text-3xl font-bold text-success">{acceptanceRate}%</span>
                   </div>
                 </CardHeader>
               </Card>

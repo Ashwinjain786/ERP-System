@@ -20,14 +20,8 @@ const item = {
 
 const GRADE_OPTIONS = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F'];
 
-const MOCK_STUDENTS = [
-  { id: 'stu-001', rollNumber: '22CS001', name: 'Aryan Sharma', assignments: 85, midsem: 78, endsem: 82, attendance: 95 },
-  { id: 'stu-002', rollNumber: '22CS002', name: 'Priya Singh', assignments: 92, midsem: 88, endsem: 90, attendance: 98 },
-  { id: 'stu-003', rollNumber: '22CS003', name: 'Rahul Verma', assignments: 75, midsem: 70, endsem: 72, attendance: 88 },
-  { id: 'stu-004', rollNumber: '22CS004', name: 'Ankit Patel', assignments: 80, midsem: 75, endsem: 78, attendance: 92 },
-  { id: 'stu-005', rollNumber: '22CS005', name: 'Sneha Reddy', assignments: 88, midsem: 85, endsem: 87, attendance: 96 },
-  { id: 'stu-006', rollNumber: '22CS006', name: 'Vikram Singh', assignments: 70, midsem: 65, endsem: 68, attendance: 82 },
-];
+import { getFacultyGrading } from '@/api/customApi';
+import { useQuery } from '@tanstack/react-query';
 
 export default function FacultyGrading() {
   const reduceMotion = useReducedMotion();
@@ -35,9 +29,15 @@ export default function FacultyGrading() {
   const { data: courses } = useFacultyCourses();
   
   const [selectedCourse, setSelectedCourse] = useState<string>(courses?.[0]?.id || '');
+  const { data: studentsData } = useQuery({
+    queryKey: ['faculty', 'grading'],
+    queryFn: getFacultyGrading,
+  });
+  const studentsList = Array.isArray(studentsData) ? studentsData : [];
+
   const [grades, setGrades] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    MOCK_STUDENTS.forEach(s => { initial[s.id] = ''; });
+    studentsList.forEach((s: any) => { initial[s.id] = ''; });
     return initial;
   });
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,12 +46,12 @@ export default function FacultyGrading() {
     setGrades(prev => ({ ...prev, [studentId]: grade }));
   };
 
-  const filteredStudents = MOCK_STUDENTS.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.rollNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStudents = studentsList.filter((s: any) => 
+    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const calculateGrade = (student: typeof MOCK_STUDENTS[0]) => {
+  const calculateGrade = (student: any) => {
     const weighted = (student.assignments * 0.3) + (student.midsem * 0.3) + (student.endsem * 0.4);
     if (weighted >= 90) return 'A+';
     if (weighted >= 85) return 'A';
@@ -102,7 +102,7 @@ export default function FacultyGrading() {
                 <CardDescription>Choose a course to grade</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {courses?.map((course) => (
+                {courses?.map((course: any) => (
                   <button
                     key={course.id}
                     onClick={() => setSelectedCourse(course.id)}
@@ -127,7 +127,7 @@ export default function FacultyGrading() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Total Students</span>
-                  <span className="font-semibold text-foreground">{MOCK_STUDENTS.length}</span>
+                  <span className="font-semibold text-foreground">{studentsList.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Graded</span>
@@ -151,7 +151,7 @@ export default function FacultyGrading() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <CardTitle className="text-lg font-display">Student Grades</CardTitle>
-                    <CardDescription>Enter grades for {courses?.find(c => c.id === selectedCourse)?.name}</CardDescription>
+                    <CardDescription>Enter grades for {courses?.find((c: any) => c.id === selectedCourse)?.name}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative">
@@ -184,7 +184,7 @@ export default function FacultyGrading() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredStudents.map((student) => {
+                      {filteredStudents.map((student: any) => {
                         const total = Math.round((student.assignments * 0.3) + (student.midsem * 0.3) + (student.endsem * 0.4));
                         return (
                           <motion.tr
@@ -196,7 +196,7 @@ export default function FacultyGrading() {
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                                   <span className="text-xs font-semibold text-primary">
-                                    {student.name.split(' ').map(n => n[0]).join('')}
+                                    {student.name?.split(' ').map((n: string) => n[0]).join('')}
                                   </span>
                                 </div>
                                 <div>

@@ -7,16 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth, MOCK_USERS } from '@/contexts/AuthContext';
-
-const ROLE_OPTIONS = [
-  { id: 'student', label: 'Student', icon: GraduationCap, color: 'bg-emerald-500' },
-  { id: 'faculty', label: 'Faculty', icon: Users, color: 'bg-blue-500' },
-  { id: 'admin', label: 'Admin', icon: Shield, color: 'bg-violet-500' },
-  { id: 'finance', label: 'Finance', icon: Wallet, color: 'bg-amber-500' },
-  { id: 'library', label: 'Library', icon: Library, color: 'bg-rose-500' },
-  { id: 'management', label: 'Management', icon: BarChart3, color: 'bg-cyan-500' },
-];
+import { useAuth } from '@/contexts/AuthContext';
 
 const container = {
   hidden: {},
@@ -31,53 +22,46 @@ const item = {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, role } = useAuth();
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
 
-  const [selectedRole, setSelectedRole] = useState<string>('');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const from = (location.state as Record<string, string> | null)?.from || `/${selectedRole || 'student'}`;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    if (!selectedRole) {
-      setError('Please select a role to continue');
-      return;
-    }
     if (!identifier.trim() || !password.trim()) {
-      setError('Please enter your credentials');
+      setError('Please enter your identifier and password');
       return;
     }
 
     setIsLoading(true);
     
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const mockUser = MOCK_USERS[selectedRole];
-    if (mockUser) {
-      login(mockUser);
+    try {
+      await login({ identifier, password });
+      
+      // Navigate based on their new role if login was successful
+      // The role might not be immediately available in the same render cycle for useAuth depending on implementation,
+      // But typically we can just redirect to / which will handle role-based routing, or to their designated dashboard.
+      // A safe fallback is to navigate to '/' and let the router handle it.
+      const from = (location.state as Record<string, string> | null)?.from || '/';
       navigate(from, { replace: true });
-    } else {
+    } catch (err: any) {
       setError('Invalid credentials. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  const quickLogin = (roleId: string) => {
-    setSelectedRole(roleId);
-    const mockUser = MOCK_USERS[roleId];
-    if (mockUser) {
-      login(mockUser);
-      navigate(`/${roleId}`, { replace: true });
-    }
+  const quickLogin = async (identifierToUse: string) => {
+    setIdentifier(identifierToUse);
+    setPassword('admin123'); // For testing/demo purposes based on seed data
   };
 
   return (
@@ -117,24 +101,41 @@ export default function Login() {
             <motion.div variants={item} className="space-y-3">
               <div className="flex items-center justify-center gap-3 text-sm">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">Select your role to continue</span>
+                <span className="text-muted-foreground">Demo Accounts</span>
                 <Sparkles className="w-4 h-4 text-primary" />
               </div>
               
               <div className="grid grid-cols-3 gap-3">
-                {ROLE_OPTIONS.slice(0, 6).map((role) => (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => quickLogin(role.id)}
-                    className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
-                  >
-                    <div className={`p-2 rounded-lg ${role.color} text-white group-hover:scale-110 transition-transform`}>
-                      <role.icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs font-medium">{role.label}</span>
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => quickLogin('student@campus.edu')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
+                >
+                  <div className={`p-2 rounded-lg bg-emerald-500 text-white group-hover:scale-110 transition-transform`}>
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-medium">Student</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => quickLogin('faculty@campus.edu')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
+                >
+                  <div className={`p-2 rounded-lg bg-blue-500 text-white group-hover:scale-110 transition-transform`}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-medium">Faculty</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => quickLogin('admin@campus.edu')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
+                >
+                  <div className={`p-2 rounded-lg bg-violet-500 text-white group-hover:scale-110 transition-transform`}>
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-medium">Admin</span>
+                </button>
               </div>
             </motion.div>
           </Wrapper>
@@ -158,37 +159,14 @@ export default function Login() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Select Role</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {ROLE_OPTIONS.map((role) => (
-                      <button
-                        key={role.id}
-                        type="button"
-                        onClick={() => setSelectedRole(role.id)}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all duration-200 ${
-                          selectedRole === role.id
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                        }`}
-                      >
-                        <role.icon className={`w-5 h-5 ${selectedRole === role.id ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`text-xs font-medium ${selectedRole === role.id ? 'text-primary' : 'text-muted-foreground'}`}>
-                          {role.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="identifier" className="text-sm font-semibold">
-                    {selectedRole === 'student' ? 'Roll Number' : 'Employee ID'}
+                    Email Address
                   </Label>
                   <Input
                     id="identifier"
-                    type="text"
-                    placeholder={selectedRole === 'student' ? 'e.g., 22CS001' : 'e.g., FAC001'}
+                    type="email"
+                    placeholder="e.g., student@campus.edu"
                     value={identifier}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIdentifier(e.target.value)}
                     className="h-11"

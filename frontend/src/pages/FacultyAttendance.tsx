@@ -17,32 +17,18 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-const MOCK_CLASSES = [
-  { id: 'c1', courseCode: 'CS301', courseName: 'Database Management Systems', section: 'A', date: '2024-03-04', time: '09:00 - 10:00' },
-  { id: 'c2', courseCode: 'CS301', courseName: 'Database Management Systems', section: 'B', date: '2024-03-04', time: '11:00 - 12:00' },
-  { id: 'c3', courseCode: 'CS305', courseName: 'Web Development Lab', section: 'A', date: '2024-03-04', time: '14:00 - 16:00' },
-];
-
-const MOCK_STUDENTS_ATTENDANCE = [
-  { id: 'stu-001', rollNumber: '22CS001', name: 'Aryan Sharma', status: 'present' },
-  { id: 'stu-002', rollNumber: '22CS002', name: 'Priya Singh', status: 'present' },
-  { id: 'stu-003', rollNumber: '22CS003', name: 'Rahul Verma', status: 'absent' },
-  { id: 'stu-004', rollNumber: '22CS004', name: 'Ankit Patel', status: 'present' },
-  { id: 'stu-005', rollNumber: '22CS005', name: 'Sneha Reddy', status: 'present' },
-  { id: 'stu-006', rollNumber: '22CS006', name: 'Vikram Singh', status: 'present' },
-  { id: 'stu-007', rollNumber: '22CS007', name: 'Kavya Nair', status: 'absent' },
-  { id: 'stu-008', rollNumber: '22CS008', name: 'Rohan Gupta', status: 'present' },
-];
+const classesList: any[] = [];
+const studentsList: any[] = [];
 
 export default function FacultyAttendance() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: workload } = useFacultyWorkload();
   
-  const [selectedClass, setSelectedClass] = useState<string>(MOCK_CLASSES[0]?.id || '');
+  const [selectedClass, setSelectedClass] = useState<string>(classesList[0]?.id || '');
   const [attendance, setAttendance] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    MOCK_STUDENTS_ATTENDANCE.forEach(s => { initial[s.id] = s.status; });
+    studentsList.forEach(s => { initial[s.id] = s.status || 'present'; });
     return initial;
   });
 
@@ -56,14 +42,14 @@ export default function FacultyAttendance() {
   const handleMarkAll = (status: 'present' | 'absent') => {
     setAttendance(prev => {
       const updated = { ...prev };
-      MOCK_STUDENTS_ATTENDANCE.forEach(s => { updated[s.id] = status; });
+      studentsList.forEach(s => { updated[s.id] = status; });
       return updated;
     });
   };
 
-  const currentClass = MOCK_CLASSES.find(c => c.id === selectedClass);
+  const currentClass = classesList.find(c => c.id === selectedClass);
   const presentCount = Object.values(attendance).filter(s => s === 'present').length;
-  const totalCount = MOCK_STUDENTS_ATTENDANCE.length;
+  const totalCount = studentsList.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,7 +85,7 @@ export default function FacultyAttendance() {
                 <CardDescription>Choose a class to mark attendance</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {MOCK_CLASSES.map((cls) => (
+                {classesList.map((cls) => (
                   <button
                     key={cls.id}
                     onClick={() => setSelectedClass(cls.id)}
@@ -158,7 +144,7 @@ export default function FacultyAttendance() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {MOCK_STUDENTS_ATTENDANCE.map((student) => (
+                  {studentsList.map((student) => (
                     <motion.div
                       key={student.id}
                       layout
@@ -167,7 +153,7 @@ export default function FacultyAttendance() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-sm font-semibold text-primary">
-                            {student.name.split(' ').map(n => n[0]).join('')}
+                            {student.name?.split(' ').map((n: string) => n[0]).join('')}
                           </span>
                         </div>
                         <div>

@@ -196,10 +196,7 @@ function RequestHistoryItem({ request }: { request: { id: string; documentName: 
   );
 }
 
-const MOCK_REQUESTS: { id: string; documentName: string; status: 'completed' | 'pending' | 'processing'; requestedDate: string }[] = [
-  { id: 'req-001', documentName: 'Bonafide Certificate', status: 'completed', requestedDate: 'Jan 15, 2024' },
-  { id: 'req-002', documentName: 'Transcript', status: 'processing', requestedDate: 'Feb 20, 2024' },
-];
+const requestsList: { id: string; documentName: string; status: 'completed' | 'pending' | 'processing'; requestedDate: string }[] = [];
 
 export default function StudentDocuments() {
   const reduceMotion = useReducedMotion();
@@ -242,10 +239,10 @@ export default function StudentDocuments() {
                       <Clock className="w-5 h-5 text-warning" />
                     </div>
                     <div>
-                      <span className="text-sm font-medium text-muted-foreground">Processing</span>
-                      <div className="font-display text-2xl font-bold tracking-tight tabular-nums">
-                        {MOCK_REQUESTS.filter(r => r.status === 'processing').length}
-                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">Processing</p>
+                      <p className="font-display text-2xl font-bold tabular-nums text-warning">
+                        {requestsList.filter(r => r.status === 'processing').length}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -255,10 +252,8 @@ export default function StudentDocuments() {
                       <CheckCircle className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <span className="text-sm font-medium text-muted-foreground">Completed</span>
-                      <div className="font-display text-2xl font-bold tracking-tight tabular-nums">
-                        {MOCK_REQUESTS.filter(r => r.status === 'completed').length}
-                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Requests</p>
+                      <p className="font-display text-2xl font-bold tabular-nums">{requestsList.length}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -281,7 +276,7 @@ export default function StudentDocuments() {
         <div>
           <h2 className="font-display text-xl font-semibold tracking-tight mb-4">Request History</h2>
           <div className="space-y-3">
-            {MOCK_REQUESTS.map((request) => (
+            {requestsList.map((request) => (
               <RequestHistoryItem key={request.id} request={request} />
             ))}
           </div>

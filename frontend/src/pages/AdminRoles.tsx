@@ -20,16 +20,25 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-const MOCK_ROLES = [
-  { id: 'role-001', name: 'Super Admin', description: 'Full system access', users: 3, permissions: ['all'], status: 'active', color: 'bg-red-500' },
-  { id: 'role-002', name: 'Admin', description: 'Administrative access', users: 8, permissions: ['manage_students', 'manage_faculty', 'manage_courses', 'view_reports'], status: 'active', color: 'bg-blue-500' },
-  { id: 'role-003', name: 'HOD', description: 'Department head access', users: 15, permissions: ['view_students', 'manage_attendance', 'view_results'], status: 'active', color: 'bg-violet-500' },
-  { id: 'role-004', name: 'Faculty', description: 'Teaching staff access', users: 120, permissions: ['view_students', 'mark_attendance', 'upload_marks'], status: 'active', color: 'bg-green-500' },
-  { id: 'role-005', name: 'Student', description: 'Student portal access', users: 1850, permissions: ['view_courses', 'view_attendance', 'view_marks', 'pay_fees'], status: 'active', color: 'bg-amber-500' },
-  { id: 'role-006', name: 'Finance Officer', description: 'Financial management', users: 5, permissions: ['manage_fees', 'view_transactions', 'generate_reports'], status: 'active', color: 'bg-emerald-500' },
-  { id: 'role-007', name: 'Librarian', description: 'Library management', users: 4, permissions: ['manage_books', 'manage_circulation', 'view_fines'], status: 'active', color: 'bg-cyan-500' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { apiConfig } from '@/api/apiCall';
+import { useEffect } from 'react';
 
+function useRoles() {
+  return useQuery({
+    queryKey: ['admin', 'roles'],
+    queryFn: async () => {
+      const res = await fetch(`${apiConfig.baseUrl}/admin/roles`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...apiConfig.headers,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch roles');
+      return res.json();
+    },
+  });
+}
 const PERMISSIONS = [
   { id: 'manage_students', name: 'Manage Students', category: 'Student Management', description: 'Add, edit, delete student records' },
   { id: 'view_students', name: 'View Students', category: 'Student Management', description: 'View student information' },
@@ -73,12 +82,22 @@ export default function AdminRoles() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState(MOCK_ROLES[1]);
-  const [rolePermissions, setRolePermissions] = useState<Set<string>>(new Set(MOCK_ROLES[1]?.permissions || []));
+  const [selectedRole, setSelectedRole] = useState<any | null>(null);
+  const [rolePermissions, setRolePermissions] = useState<Set<string>>(new Set());
 
-  const filteredRoles = MOCK_ROLES.filter(role =>
-    role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    role.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const { data: rolesData } = useRoles();
+  const roles = Array.isArray(rolesData) ? rolesData : [];
+
+  useEffect(() => {
+    if (roles.length > 0 && !selectedRole) {
+      setSelectedRole(roles[0]);
+      setRolePermissions(new Set(roles[0].permissions || []));
+    }
+  }, [roles, selectedRole]);
+
+  const filteredRoles = roles.filter((role: any) =>
+    role.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    role.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const togglePermission = (permId: string) => {
@@ -91,9 +110,9 @@ export default function AdminRoles() {
     setRolePermissions(newPerms);
   };
 
-  const selectRole = (role: typeof MOCK_ROLES[0]) => {
+  const selectRole = (role: any) => {
     setSelectedRole(role);
-    setRolePermissions(new Set(role.permissions));
+    setRolePermissions(new Set(role.permissions || []));
   };
 
   return (
@@ -123,14 +142,14 @@ export default function AdminRoles() {
                 <Card className="border-2 border-border/60 bg-card">
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Total Roles</p>
-                    <p className="font-display text-2xl font-bold tabular-nums">{MOCK_ROLES.length}</p>
+                    <p className="font-display text-2xl font-bold tabular-nums">{roles.length}</p>
                   </CardContent>
                 </Card>
                 <Card className="border-2 border-border/60 bg-card">
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Active Roles</p>
                     <p className="font-display text-2xl font-bold tabular-nums text-success">
-                      {MOCK_ROLES.filter(r => r.status === 'active').length}
+                      {roles.filter((r: any) => r.status === 'active').length}
                     </p>
                   </CardContent>
                 </Card>
@@ -138,7 +157,7 @@ export default function AdminRoles() {
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Total Users</p>
                     <p className="font-display text-2xl font-bold tabular-nums">
-                      {MOCK_ROLES.reduce((acc, r) => acc + r.users, 0)}
+                      {roles.reduce((acc: number, r: any) => acc + (r.users || 0), 0)}
                     </p>
                   </CardContent>
                 </Card>
@@ -162,7 +181,7 @@ export default function AdminRoles() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg font-display">Roles</CardTitle>
-                    <CardDescription>{filteredRoles.length} roles</CardDescription>
+                    <CardDescription>Select from {filteredRoles.length} predefined roles</CardDescription>
                   </div>
                 </div>
                 <div className="relative mt-2">

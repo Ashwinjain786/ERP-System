@@ -1,10 +1,12 @@
-version: '3.8'
+version: '3.9'
 
 services:
+
+  # ─── PostgreSQL Database ───────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: erp_db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: erp_user
       POSTGRES_PASSWORD: erp_password
@@ -13,39 +15,58 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - erp_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp_user -d erp_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
+  # ─── Node.js / Express API ─────────────────────────────────────────────────
   api:
-    build: 
+    build:
       context: .
       dockerfile: backend/Dockerfile
     container_name: erp_api
-    restart: always
+    restart: unless-stopped
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_URL=postgresql://erp_user:erp_password@db:5432/erp_db?schema=public
-      - JWT_SECRET=super_secure_jwt_secret_123
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://erp_user:erp_password@db:5432/erp_db?schema=public
+      JWT_SECRET: super_secure_jwt_secret_change_in_production
+      FRONTEND_URL: http://localhost:8080
     depends_on:
-      - db
+      db:
+        condition: service_healthy   # wait for postgres health-check to pass
     networks:
       - erp_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
+  # ─── React SPA via Nginx (proxies /api → api service) ─────────────────────
   web:
     build:
       context: .
       dockerfile: frontend/Dockerfile
     container_name: erp_web
-    restart: always
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8080:80"     # ← open http://localhost:8080 in your browser
     depends_on:
-      - api
+      api:
+        condition: service_healthy   # wait for API to be ready
     networks:
       - erp_network
 
+# ─── Volumes & Networks ────────────────────────────────────────────────────
 networks:
   erp_network:
     driver: bridge
 
 volumes:
   pgdata:
+    driver: local

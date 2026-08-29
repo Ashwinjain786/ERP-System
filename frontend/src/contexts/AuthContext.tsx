@@ -1,96 +1,72 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
-import type { User } from '@/api/apiInterface';
+import type { User, LoginUserInput } from '@/api/apiInterface';
+import { loginUser as apiLoginUser, getCurrentUser as apiGetCurrentUser, logoutUser as apiLogoutUser, setApiConfig } from '@/api/apiCall';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (user: User) => void;
+  login: (input: LoginUserInput) => Promise<void>;
   logout: () => void;
   role: string | undefined;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'campusone_auth';
-
-const MOCK_USERS: Record<string, User> = {
-  student: {
-    id: 'stu-001',
-    name: 'Aryan Sharma',
-    email: 'aryan.sharma@campusone.edu',
-    role: 'student',
-    department: 'Computer Science',
-    avatarUrl: undefined,
-  },
-  faculty: {
-    id: 'fac-001',
-    name: 'Dr. Priya Menon',
-    email: 'priya.menon@campusone.edu',
-    role: 'faculty',
-    department: 'Computer Science',
-    avatarUrl: undefined,
-  },
-  admin: {
-    id: 'admin-001',
-    name: 'Prof. Rajesh Kumar',
-    email: 'rajesh.kumar@campusone.edu',
-    role: 'admin',
-    department: 'Administration',
-    avatarUrl: undefined,
-  },
-  finance: {
-    id: 'fin-001',
-    name: 'CA Suresh Reddy',
-    email: 'suresh.reddy@campusone.edu',
-    role: 'finance_officer',
-    department: 'Finance',
-    avatarUrl: undefined,
-  },
-  library: {
-    id: 'lib-001',
-    name: 'Ms. Kavita Iyer',
-    email: 'kavita.iyer@campusone.edu',
-    role: 'librarian',
-    department: 'Library',
-    avatarUrl: undefined,
-  },
-  management: {
-    id: 'mgmt-001',
-    name: 'Dr. Aparna Singh',
-    email: 'aparna.singh@campusone.edu',
-    role: 'management',
-    department: 'Executive',
-    avatarUrl: undefined,
-  },
-};
+const TOKEN_KEY = 'campusone_jwt_token';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
-      }
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const data = await apiGetCurrentUser();
+      setUser(data as unknown as User);
+    } catch (error) {
+      console.error('Failed to fetch current user', error);
+      setUser(null);
+      localStorage.removeItem(TOKEN_KEY);
+      setApiConfig({ headers: { Authorization: '' } });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      setApiConfig({ headers: { Authorization: `Bearer ${token}` } });
+      fetchCurrentUser();
+    } else {
+      setIsLoading(false);
+    }
+  }, [fetchCurrentUser]);
+
+  const login = async (input: LoginUserInput) => {
+    setIsLoading(true);
+    try {
+      const res = await apiLoginUser(input);
+      if (res && res.token) {
+        localStorage.setItem(TOKEN_KEY, res.token);
+        setApiConfig({ headers: { Authorization: `Bearer ${res.token}` } });
+        setUser(res.user as unknown as User);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await apiLogoutUser();
+    } catch (e) {
+      console.error('Logout failed', e);
+    }
     setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    setApiConfig({ headers: { Authorization: '' } });
   };
 
   return (
@@ -116,5 +92,3 @@ export function useAuth() {
   }
   return context;
 }
-
-export { MOCK_USERS };

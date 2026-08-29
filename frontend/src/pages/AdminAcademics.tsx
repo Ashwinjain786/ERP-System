@@ -21,18 +21,8 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-const MOCK_PROGRAMS = [
-  { id: 'prog-001', name: 'B.Tech', duration: '4 Years', seats: 600, departments: ['Computer Science', 'Information Technology', 'Mechanical Engineering', 'Electrical Engineering', 'Civil Engineering'] },
-  { id: 'prog-002', name: 'M.Tech', duration: '2 Years', seats: 120, departments: ['Computer Science', 'Information Technology', 'Mechanical Engineering'] },
-  { id: 'prog-003', name: 'M.B.A', duration: '2 Years', seats: 60, departments: ['Management'] },
-];
-
-const MOCK_DEGREES = [
-  { id: 'deg-001', name: 'Bachelor of Technology', abbreviation: 'B.Tech', level: 'Undergraduate' },
-  { id: 'deg-002', name: 'Master of Technology', abbreviation: 'M.Tech', level: 'Postgraduate' },
-  { id: 'deg-003', name: 'Master of Business Administration', abbreviation: 'M.B.A', level: 'Postgraduate' },
-];
-
+const programs: any[] = [];
+const degrees: any[] = [];
 function TableSkeleton() {
   return (
     <div className="space-y-3">
@@ -66,6 +56,9 @@ export default function AdminAcademics() {
     return c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.code.toLowerCase().includes(searchQuery.toLowerCase());
   }) || [];
+  
+  const filteredPrograms = programs.filter((p: any) => p.name?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredDegrees = degrees.filter((d: any) => d.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const tabs = [
     { id: 'programs', label: 'Programs', icon: GraduationCap },
@@ -100,13 +93,13 @@ export default function AdminAcademics() {
                 <Card className="border-2 border-border/60 bg-card">
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Total Programs</p>
-                    <p className="font-display text-2xl font-bold tabular-nums">{MOCK_PROGRAMS.length}</p>
+                    <p className="font-display text-2xl font-bold tabular-nums">{programs.length}</p>
                   </CardContent>
                 </Card>
                 <Card className="border-2 border-border/60 bg-card">
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Degrees Offered</p>
-                    <p className="font-display text-2xl font-bold tabular-nums">{MOCK_DEGREES.length}</p>
+                    <p className="font-display text-2xl font-bold tabular-nums">{degrees.length}</p>
                   </CardContent>
                 </Card>
                 <Card className="border-2 border-border/60 bg-card">
@@ -153,7 +146,7 @@ export default function AdminAcademics() {
             <CardContent>
               <Wrapper variants={container} initial="hidden" animate="show">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {MOCK_PROGRAMS.map((program) => (
+                  {filteredPrograms.map((program: any) => (
                     <motion.div
                       key={program.id}
                       variants={item}
@@ -183,7 +176,7 @@ export default function AdminAcademics() {
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-1">
-                        {program.departments.slice(0, 3).map((dept, i) => (
+                        {program.departments.slice(0, 3).map((dept: any, i: number) => (
                           <span key={i} className="px-2 py-0.5 rounded bg-secondary text-xs">{dept}</span>
                         ))}
                         {program.departments.length > 3 && (
@@ -219,7 +212,7 @@ export default function AdminAcademics() {
                       </tr>
                     </thead>
                     <tbody>
-                      {MOCK_DEGREES.map((degree) => (
+                      {filteredDegrees.map((degree: any) => (
                         <motion.tr
                           key={degree.id}
                           variants={item}

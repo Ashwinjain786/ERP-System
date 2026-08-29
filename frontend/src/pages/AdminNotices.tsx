@@ -34,13 +34,7 @@ interface Notice {
   isUrgent: boolean;
 }
 
-const MOCK_NOTICES: Notice[] = [
-  { id: '1', title: 'Mid-Semester Examination Schedule', content: 'Examinations from March 15-25, 2024. All students must carry their ID cards.', category: 'examination', targetRole: 'all', publishedAt: '2024-02-28T10:00:00Z', publishedBy: 'Dr. Rajesh Kumar', isUrgent: true },
-  { id: '2', title: 'Annual Tech Fest Registration', content: 'Innovate 2024 registrations are now open. Last date: March 10, 2024.', category: 'events', targetRole: 'student', publishedAt: '2024-02-25T14:30:00Z', publishedBy: 'Student Council', isUrgent: false },
-  { id: '3', title: 'Faculty Meeting - March 5', content: 'All faculty members must attend the meeting at 2:00 PM in the conference hall.', category: 'academic', targetRole: 'faculty', publishedAt: '2024-02-20T09:00:00Z', publishedBy: 'Principal', isUrgent: false },
-  { id: '4', title: 'Library Holiday Notice', content: 'Library will remain closed on March 1st for annual maintenance.', category: 'general', targetRole: 'all', publishedAt: '2024-02-18T11:00:00Z', publishedBy: 'Librarian', isUrgent: false },
-  { id: '5', title: 'Fee Payment Reminder', content: 'Last date for semester fee payment is March 31, 2024.', category: 'fee', targetRole: 'student', publishedAt: '2024-02-15T08:00:00Z', publishedBy: 'Finance Department', isUrgent: true },
-];
+
 
 function getCategoryColor(category?: string) {
   switch (category) {
@@ -77,18 +71,18 @@ export default function AdminNotices() {
     isUrgent: false,
   });
 
-  const { data: notices, isLoading, error } = useNotices();
-  const allNotices = MOCK_NOTICES;
+  const { data: noticesData, isLoading, error } = useNotices();
+  const allNotices = Array.isArray(noticesData) ? noticesData : [];
 
-  const filteredNotices = allNotices.filter(notice => {
-    const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notice.content.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredNotices = allNotices.filter((notice: any) => {
+    const matchesSearch = notice.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notice.content?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !categoryFilter || notice.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const urgentNotices = allNotices.filter(n => n.isUrgent);
-  const regularNotices = allNotices.filter(n => !n.isUrgent);
+  const urgentNotices = allNotices.filter((n: any) => n.isUrgent);
+  const regularNotices = allNotices.filter((n: any) => !n.isUrgent);
 
   if (error) {
     return (
