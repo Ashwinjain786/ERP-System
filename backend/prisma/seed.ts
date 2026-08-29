@@ -92,13 +92,21 @@ async function main() {
       departmentId: csDept.id,
       semester: 4,
       credits: 4,
-      facultyInstructor: facultyProfile?.id
+      facultyId: facultyProfile?.id
     }
   });
 
   // 6. Timetable
-  await prisma.timetableEntry.create({
-    data: {
+  await prisma.timetableEntry.upsert({
+    where: { 
+      dayOfWeek_period_facultyId: {
+        dayOfWeek: 'Monday',
+        period: 1,
+        facultyId: facultyProfile!.id
+      }
+    },
+    update: {},
+    create: {
       dayOfWeek: 'Monday',
       period: 1,
       timeSlot: '09:00-09:55',
@@ -106,7 +114,8 @@ async function main() {
       facultyId: facultyProfile!.id,
       roomNumber: 'CR-101',
       section: 'A',
-      semester: 4
+      semester: 4,
+      departmentId: csDept.id
     }
   });
 
@@ -201,7 +210,7 @@ async function main() {
     await prisma.admissionApplication.upsert({
       where: { applicationId: app.applicationId },
       update: {},
-      create: app
+      create: app as any
     });
   }
 

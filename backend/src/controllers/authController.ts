@@ -40,16 +40,49 @@ export const loginUser = async (req: Request, res: Response) => {
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
 
+    // Fetch full profile so frontend hooks get studentProfile.id / facultyProfile.id immediately
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        avatarUrl: true,
+        phone: true,
+        studentProfile: {
+          select: {
+            id: true,
+            rollNumber: true,
+            departmentId: true,
+            department: { select: { name: true } },
+            semester: true,
+            section: true,
+            degree: true,
+            batch: true,
+            cgpa: true,
+            attendancePercentage: true,
+            feeStatus: true,
+          }
+        },
+        facultyProfile: {
+          select: {
+            id: true,
+            employeeCode: true,
+            departmentId: true,
+            department: { select: { name: true } },
+            designation: true,
+            qualification: true,
+            weeklyWorkloadHours: true,
+            leaveBalance: true,
+          }
+        },
+      }
+    });
+
     res.json({
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        phone: user.phone,
-      }
+      user: fullUser,
     });
 
   } catch (error) {

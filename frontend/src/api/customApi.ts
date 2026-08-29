@@ -24,22 +24,38 @@ async function fetchWithConfig(path: string, options: RequestInit = {}) {
 export const getAdmissions = () => fetchWithConfig('/admin/admissions');
 export const getRoles = () => fetchWithConfig('/admin/roles');
 
-// Faculty
-export const getFacultyLeaves = () => fetchWithConfig('/faculty/leaves');
-export const getFacultyGrading = () => fetchWithConfig('/faculty/grading');
-export const getFacultyClasses = () => fetchWithConfig('/faculty/classes');
-export const getFacultyAttendance = () => fetchWithConfig('/faculty/attendance');
-export const getFacultyDepartment = () => fetchWithConfig('/faculty/department');
-
-// Student
-export const getStudentDocuments = () => fetchWithConfig('/student/documents');
-
-// General
-export const getAllTimetables = () => fetchWithConfig('/timetable/all');
-export const getAllNotices = () => fetchWithConfig('/notice/all');
-export const getAllExaminations = () => fetchWithConfig('/examination/all');
-export const getAcademics = () => fetchWithConfig('/department/all');
+// Faculty (require :id — callers must pass facultyId)
+export const getFacultyLeaves = (facultyId: string) =>
+  fetchWithConfig(`/faculty/${facultyId}/leaves`);
 
 // Library
-export const getLibraryCirculation = (borrowerId?: string) => 
+export const getLibraryCirculation = (borrowerId?: string) =>
   fetchWithConfig(`/library/circulation${borrowerId ? `?borrowerId=${borrowerId}` : ''}`);
+
+// General
+export const getAllTimetables = (params?: { section?: string; semester?: number; department?: string }) => {
+  const qs = params
+    ? '?' + new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+    : '';
+  return fetchWithConfig(`/timetables${qs}`);
+};
+
+export const getAllNotices = (targetRole?: string) =>
+  fetchWithConfig(`/notices${targetRole ? `?targetRole=${targetRole}` : ''}`);
+
+export const getAllExaminations = (params?: { semester?: number; status?: string }) => {
+  const qs = params
+    ? '?' + new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+    : '';
+  return fetchWithConfig(`/examinations${qs}`);
+};
+
+export const getAcademics = () => fetchWithConfig('/departments');

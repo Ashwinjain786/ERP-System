@@ -255,18 +255,36 @@ export const getStudentDocuments = async (req: Request, res: Response) => {
 
 export const getStudentFees = async (req: Request, res: Response) => {
   try {
-    const transactions = await prisma.feeTransaction.findMany({
-      where: { studentId: req.params.id }
+    const student = await prisma.student.findUnique({
+      where: { id: req.params.id },
+      include: {
+        feeTransactions: { where: { status: 'success' } }
+      }
     });
-    const student = await prisma.student.findUnique({ where: { id: req.params.id } });
-    
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    // Look up the fee structure for this student's program
+    const feeStructure = await prisma.feeStructure.findFirst({
+      where: { program: student.degree || 'B.Tech' }
+    });
+
+    const totalAnnualFee = feeStructure ? feeStructure.totalAmount : 100000;
+    const totalPaid = student.feeTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const dueBalance = Math.max(0, totalAnnualFee - totalPaid);
+
+    // Fetch all transactions for the ledger (success + pending)
+    const allTransactions = await prisma.feeTransaction.findMany({
+      where: { studentId: req.params.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
     res.json({
       studentId: req.params.id,
-      totalAnnualFee: 100000,
-      totalPaid: transactions.reduce((sum, t) => sum + t.amount, 0),
-      dueBalance: 100000 - transactions.reduce((sum, t) => sum + t.amount, 0),
-      status: student?.feeStatus || 'due',
-      transactions: transactions
+      totalAnnualFee,
+      totalPaid,
+      dueBalance,
+      status: student.feeStatus,
+      transactions: allTransactions
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });

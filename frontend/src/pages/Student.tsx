@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useStudentProfile, useStudentAttendance, useStudentCourses, useStudentTimetable, useNotices } from '@/features/student/hooks';
+import { useStudentProfile, useStudentAttendance, useStudentCourses, useStudentTimetable, useNotices, useExaminations } from '@/features/student/hooks';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import type { Course, TimetableEntry, Notice } from '@/api/apiInterface';
@@ -116,10 +116,8 @@ export default function Student() {
   const { data: notices } = useNotices();
 
   const todayClasses = timetable?.entries.filter((e: TimetableEntry) => e.dayOfWeek === 'Monday').slice(0, 3) || [];
-  const upcomingExams = [
-    { name: 'Database Management Systems', date: '2024-03-15', time: '09:00 AM' },
-    { name: 'Operating Systems', date: '2024-03-18', time: '02:00 PM' },
-  ];
+  const { data: examinations } = useExaminations();
+  const upcomingExams = examinations?.slice(0, 2) || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -236,15 +234,15 @@ export default function Student() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {upcomingExams.map((exam, idx) => (
-                    <div key={idx} className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border-l-4 border-warning">
+                  {upcomingExams.map((exam: any) => (
+                    <div key={exam.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border-l-4 border-warning">
                       <div className="p-2 rounded-lg bg-warning/10">
                         <FileText className="w-5 h-5 text-warning" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground">{exam.name}</p>
+                        <p className="font-semibold text-foreground">{exam.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(exam.date), 'MMM d, yyyy')} at {exam.time}
+                          {format(new Date(exam.startDate), 'MMM d, yyyy')}
                         </p>
                       </div>
                       <Button variant="outline" size="sm">Download Hall Ticket</Button>

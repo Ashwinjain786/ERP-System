@@ -20,8 +20,7 @@ const item = {
 
 const GRADE_OPTIONS = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F'];
 
-import { getFacultyGrading } from '@/api/customApi';
-import { useQuery } from '@tanstack/react-query';
+import { useFacultyStudents } from '@/features/faculty/hooks';
 
 export default function FacultyGrading() {
   const reduceMotion = useReducedMotion();
@@ -29,10 +28,7 @@ export default function FacultyGrading() {
   const { data: courses } = useFacultyCourses();
   
   const [selectedCourse, setSelectedCourse] = useState<string>(courses?.[0]?.id || '');
-  const { data: studentsData } = useQuery({
-    queryKey: ['faculty', 'grading'],
-    queryFn: getFacultyGrading,
-  });
+  const { data: studentsData = [] } = useFacultyStudents();
   const studentsList = Array.isArray(studentsData) ? studentsData : [];
 
   const [grades, setGrades] = useState<Record<string, string>>(() => {

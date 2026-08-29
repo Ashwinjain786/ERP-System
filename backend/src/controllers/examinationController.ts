@@ -34,7 +34,29 @@ export const createExamination = async (req: Request, res: Response) => {
 
 export const getExamResults = async (req: Request, res: Response) => {
   try {
+    const { department } = req.query;
+
+    // Verify examination exists
+    const exam = await prisma.examination.findUnique({ where: { id: req.params.id } });
+    if (!exam) return res.status(404).json({ success: false, message: 'Examination not found' });
+
+    // Filter directly by examinationId (proper FK relation)
+    const whereClause: any = { examinationId: req.params.id };
+
+    if (department) {
+      const dept = await prisma.department.findFirst({
+        where: {
+          OR: [
+            { id: department as string },
+            { name: { equals: department as string, mode: 'insensitive' } },
+          ]
+        }
+      });
+      if (dept) whereClause.course = { departmentId: dept.id };
+    }
+
     const results = await prisma.examResult.findMany({
+      where: whereClause,
       include: {
         student: { include: { user: true } },
         course: true
@@ -47,6 +69,7 @@ export const getExamResults = async (req: Request, res: Response) => {
       studentName: r.student.user.name,
       rollNumber: r.student.rollNumber,
       courseCode: r.course.code,
+      courseName: r.course.name,
       internalScore: r.internalScore,
       endSemScore: r.endSemScore,
       totalScore: r.totalScore,
@@ -62,21 +85,30 @@ export const getExamResults = async (req: Request, res: Response) => {
 export const submitExamResults = async (req: Request, res: Response) => {
   try {
     const { courseCode, section, results } = req.body;
-    
-    // Find course first
+    const examinationId = req.params.id;
+
+    // Validate examination exists
+    const exam = await prisma.examination.findUnique({ where: { id: examinationId } });
+    if (!exam) return res.status(404).json({ success: false, message: 'Examination not found' });
+
+    // Find course
     const course = await prisma.course.findUnique({ where: { code: courseCode } });
     if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
 
     const createManyData = results.map((r: any) => ({
       studentId: r.studentId,
       courseId: course.id,
+      examinationId,                                              // now properly stored
       internalScore: r.internalScore,
       endSemScore: r.endSemScore,
       totalScore: r.internalScore + r.endSemScore,
       grade: calculateGrade(r.internalScore + r.endSemScore)
     }));
 
-    await prisma.examResult.createMany({ data: createManyData });
+    await prisma.examResult.createMany({
+      data: createManyData,
+      skipDuplicates: true   // respects @@unique([studentId, courseId, examinationId])
+    });
 
     res.json({ success: true, message: 'Results submitted successfully' });
   } catch (error) {

@@ -28,8 +28,9 @@ export default function FacultyLeaves() {
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: profile } = useFacultyProfile();
   const { data: leavesData } = useQuery({
-    queryKey: ['faculty', 'leaves'],
-    queryFn: getFacultyLeaves,
+    queryKey: ['faculty', 'leaves', profile?.id],
+    queryFn: () => getFacultyLeaves(profile!.id),
+    enabled: !!profile?.id,
   });
   const leaves = Array.isArray(leavesData) ? leavesData : [];
   

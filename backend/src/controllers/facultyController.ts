@@ -6,7 +6,22 @@ export const getFacultyList = async (req: Request, res: Response) => {
   try {
     const { department, designation } = req.query;
     let whereClause: any = {};
-    if (department) whereClause.departmentId = department;
+
+    if (department) {
+      // department param may be a name string or an ID — resolve to ID
+      const dept = await prisma.department.findFirst({
+        where: {
+          OR: [
+            { id: department as string },
+            { name: { equals: department as string, mode: 'insensitive' } },
+            { code: { equals: department as string, mode: 'insensitive' } },
+          ]
+        }
+      });
+      if (dept) whereClause.departmentId = dept.id;
+      else whereClause.departmentId = department;
+    }
+
     if (designation) whereClause.designation = designation;
 
     const faculty = await prisma.faculty.findMany({

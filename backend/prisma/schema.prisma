@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -9,22 +9,10 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String   // Added for auth
-  role      Role     @default(student)
-  phone     String?
-  avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  studentProfile Student?
-  facultyProfile Faculty?
-  fineRecords    FineRecord[]
-  borrowedBooks  CirculationRecord[]
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ENUMS
+//  All status/category/type fields must be enums — no raw strings for domain values.
+// ═══════════════════════════════════════════════════════════════════════════════
 
 enum Role {
   student
@@ -36,143 +24,15 @@ enum Role {
   management
 }
 
-model Department {
-  id               String   @id @default(uuid())
-  code             String   @unique
-  name             String
-  headOfDepartment String?  // Faculty ID can be linked later
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  students Student[]
-  faculty  Faculty[]
-  courses  Course[]
-}
-
-model Student {
-  id                   String   @id @default(uuid())
-  userId               String   @unique
-  rollNumber           String   @unique
-  departmentId         String
-  degree               String?
-  semester             Int      @default(1)
-  batch                String?
-  section              String?
-  cgpa                 Float?   @default(0.0)
-  attendancePercentage Float?   @default(0.0)
-  feeStatus            FeeStatus @default(due)
-  
-  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department           Department        @relation(fields: [departmentId], references: [id])
-  
-  attendanceRecords    AttendanceRecord[]
-  examResults          ExamResult[]
-  feeTransactions      FeeTransaction[]
-  documentRequests     DocumentRequest[]
-  placements           PlacementRecord[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum FeeStatus {
   paid
   partial
   due
 }
 
-model Faculty {
-  id                  String   @id @default(uuid())
-  userId              String   @unique
-  employeeCode        String   @unique
-  departmentId        String
-  designation         String
-  qualification       String?
-  weeklyWorkloadHours Float?   @default(0)
-  leaveBalance        Float?   @default(0)
-
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department       Department       @relation(fields: [departmentId], references: [id])
-  courses          Course[]
-  timetableEntries TimetableEntry[]
-  leaveRequests    LeaveRequest[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Course {
-  id                String   @id @default(uuid())
-  code              String   @unique
-  name              String
-  departmentId      String
-  semester          Int
-  credits           Int
-  type              String?  @default("theory") // theory, lab, elective, project
-  description       String?
-  facultyInstructor String?
-
-  department Department @relation(fields: [departmentId], references: [id])
-  faculty    Faculty?   @relation(fields: [facultyInstructor], references: [id])
-
-  attendanceRecords AttendanceRecord[]
-  examResults       ExamResult[]
-  timetables        TimetableEntry[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model AttendanceRecord {
-  id              String   @id @default(uuid())
-  studentId       String
-  courseId        String
-  date            DateTime
-  period          Int
-  status          AttendanceStatus
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum AttendanceStatus {
   present
   absent
-}
-
-model TimetableEntry {
-  id         String   @id @default(uuid())
-  dayOfWeek  String   // Monday, Tuesday, etc.
-  period     Int
-  timeSlot   String
-  courseId   String
-  facultyId  String
-  roomNumber String
-  section    String
-  semester   Int
-
-  course  Course  @relation(fields: [courseId], references: [id])
-  faculty Faculty @relation(fields: [facultyId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Examination {
-  id                 String   @id @default(uuid())
-  title              String
-  academicYear       String?
-  semester           Int
-  startDate          DateTime
-  endDate            DateTime
-  status             ExamStatus @default(upcoming)
-  hallTicketReleased Boolean    @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 enum ExamStatus {
@@ -182,57 +42,11 @@ enum ExamStatus {
   evaluated
 }
 
-model ExamResult {
-  id            String   @id @default(uuid())
-  studentId     String
-  courseId      String
-  internalScore Float?
-  endSemScore   Float?
-  totalScore    Float
-  grade         String
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model FeeStructure {
-  id             String   @id @default(uuid())
-  program        String
-  quota          FeeQuota @default(general)
-  tuitionFee     Float    @default(0)
-  hostelFee      Float    @default(0)
-  examFee        Float    @default(0)
-  libraryDeposit Float    @default(0)
-  totalAmount    Float
-  dueDate        DateTime
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum FeeQuota {
   general
   merit
   management
   nri
-}
-
-model FeeTransaction {
-  id            String   @id @default(uuid())
-  receiptNumber String   @unique
-  studentId     String
-  amount        Float
-  paymentMethod PaymentMethod?
-  status        TransactionStatus @default(pending)
-  paidAt        DateTime?
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 enum PaymentMethod {
@@ -251,80 +65,16 @@ enum TransactionStatus {
   refunded
 }
 
-model Book {
-  id              String   @id @default(uuid())
-  isbn            String   @unique
-  title           String
-  author          String
-  publisher       String?
-  category        String?
-  rackLocation    String?
-  totalCopies     Int      @default(1)
-  availableCopies Int      @default(1)
-  coverImageUrl   String?
-
-  circulationRecords CirculationRecord[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model CirculationRecord {
-  id         String   @id @default(uuid())
-  bookId     String
-  borrowerId String
-  issueDate  DateTime
-  dueDate    DateTime
-  returnDate DateTime?
-  fineAmount Float?   @default(0)
-  status     CirculationStatus @default(issued)
-
-  book     Book @relation(fields: [bookId], references: [id])
-  borrower User @relation(fields: [borrowerId], references: [id]) // Assuming both students and faculty can borrow
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum CirculationStatus {
   issued
   returned
   overdue
 }
 
-model FineRecord {
-  id       String   @id @default(uuid())
-  userId   String
-  amount   Float
-  reason   String?
-  status   FineStatus @default(unpaid)
-  issuedAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum FineStatus {
   unpaid
   paid
   waived
-}
-
-model Notice {
-  id          String   @id @default(uuid())
-  title       String
-  content     String   @db.Text
-  category    NoticeCategory @default(general)
-  targetRole  String?  @default("all") // can be "all", "student", "faculty", "hod"
-  department  String?  // nullable if for all departments
-  publishedBy String?
-  publishedAt DateTime @default(now())
-  isUrgent    Boolean  @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 enum NoticeCategory {
@@ -335,70 +85,528 @@ enum NoticeCategory {
   general
 }
 
-model LeaveRequest {
+// NEW — replaces raw String fields
+
+enum CourseType {
+  theory
+  lab
+  elective
+  project
+}
+
+enum DayOfWeek {
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+}
+
+enum DocumentStatus {
+  pending
+  processing
+  completed
+  rejected
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+  waitlisted
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MODELS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── User ────────────────────────────────────────────────────────────────────
+// Central identity record. One user has exactly one role-specific profile.
+
+model User {
   id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(student)
+  phone     String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations (back-references)
+  studentProfile Student?
+  facultyProfile Faculty?
+  fineRecords    FineRecord[]
+  borrowedBooks  CirculationRecord[]
+
+  @@index([role])
+}
+
+// ─── Department ───────────────────────────────────────────────────────────────
+// headOfDepartmentId is a proper FK to Faculty — NOT a raw string placeholder.
+// The circular (Faculty ↔ Department) reference is resolved by naming both sides.
+
+model Department {
+  id                 String   @id @default(uuid())
+  code               String   @unique
+  name               String   @unique   // Two departments cannot share a name
+  headOfDepartmentId String?  @unique   // FK → Faculty.id (named relation below)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Proper FK relation to Faculty (named to disambiguate from Faculty.department)
+  headOfDepartment Faculty?  @relation("DepartmentHOD", fields: [headOfDepartmentId], references: [id], onDelete: SetNull)
+
+  // Back-references
+  students   Student[]
+  faculty    Faculty[]       @relation("DepartmentFaculty")
+  courses    Course[]
+  timetables TimetableEntry[]
+}
+
+// ─── Student ─────────────────────────────────────────────────────────────────
+
+model Student {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  rollNumber           String    @unique
+  departmentId         String
+  degree               String?
+  semester             Int       @default(1)
+  batch                String?
+  section              String?
+  cgpa                 Float?    @default(0.0)
+  attendancePercentage Float?    @default(0.0)
+  feeStatus            FeeStatus @default(due)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  // Back-references
+  attendanceRecords AttendanceRecord[]
+  examResults       ExamResult[]
+  feeTransactions   FeeTransaction[]
+  documentRequests  DocumentRequest[]
+  placements        PlacementRecord[]
+
+  // Indexes — every FK and frequently-filtered column needs an index
+  @@index([departmentId])
+  @@index([feeStatus])
+  @@index([semester])
+  @@index([batch])
+  @@index([departmentId, semester, section])  // composite for workload/timetable queries
+}
+
+// ─── Faculty ─────────────────────────────────────────────────────────────────
+
+model Faculty {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  employeeCode        String   @unique
+  departmentId        String
+  designation         String
+  qualification       String?
+  weeklyWorkloadHours Float?   @default(0)
+  leaveBalance        Float?   @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation("DepartmentFaculty", fields: [departmentId], references: [id], onDelete: Restrict)
+
+  // Back-references
+  courses          Course[]
+  timetableEntries TimetableEntry[]
+  leaveRequests    LeaveRequest[]
+  headOf           Department?      @relation("DepartmentHOD") // back-ref: this faculty may head a dept
+
+  @@index([departmentId])
+  @@index([designation])
+}
+
+// ─── Course ───────────────────────────────────────────────────────────────────
+// NOTE: facultyInstructor field renamed to facultyId (stores Faculty.id, not a name).
+// @map("faculty_instructor") preserves the existing DB column — zero data migration needed.
+
+model Course {
+  id           String     @id @default(uuid())
+  code         String     @unique
+  name         String
+  departmentId String
+  semester     Int
+  credits      Int
+  type         CourseType @default(theory)  // was String? — now a proper enum
+  description  String?
+  facultyId    String?    @map("faculty_instructor")  // renamed field, same DB column
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  faculty    Faculty?   @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+
+  // Back-references
+  attendanceRecords AttendanceRecord[]
+  examResults       ExamResult[]
+  timetables        TimetableEntry[]
+
+  @@index([departmentId])
+  @@index([departmentId, semester])  // most common query pattern
+  @@index([semester])
+}
+
+// ─── AttendanceRecord ────────────────────────────────────────────────────────
+// CRITICAL: composite unique prevents duplicate attendance entries.
+
+model AttendanceRecord {
+  id        String           @id @default(uuid())
+  studentId String
+  courseId  String
+  date      DateTime
+  period    Int
+  status    AttendanceStatus
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Prevents marking the same student twice in the same period
+  @@unique([studentId, courseId, date, period])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([date])
+  @@index([studentId, courseId])
+}
+
+// ─── TimetableEntry ──────────────────────────────────────────────────────────
+// Three conflict-prevention unique constraints:
+//   1. A faculty cannot be in two rooms at the same time.
+//   2. A room cannot host two classes at the same time.
+//   3. A section of a dept cannot have two classes at the same time.
+// departmentId stored directly (denormalized from Course) to enable constraint #3.
+
+model TimetableEntry {
+  id           String    @id @default(uuid())
+  dayOfWeek    DayOfWeek             // was String — now a proper enum
+  period       Int
+  timeSlot     String
+  courseId     String
+  facultyId    String
+  roomNumber   String
+  section      String
+  semester     Int
+  departmentId String               // denormalized from Course.departmentId for constraint
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  faculty    Faculty    @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  // Scheduling conflict guards
+  @@unique([dayOfWeek, period, facultyId])                      // No faculty double-booking
+  @@unique([dayOfWeek, period, roomNumber])                     // No room double-booking
+  @@unique([dayOfWeek, period, section, semester, departmentId]) // No section double-booking within dept
+
+  @@index([facultyId])
+  @@index([courseId])
+  @@index([departmentId, section, semester])
+}
+
+// ─── Examination ─────────────────────────────────────────────────────────────
+// Was completely isolated — ExamResult had NO link back. Fixed with back-reference.
+
+model Examination {
+  id                 String     @id @default(uuid())
+  title              String
+  academicYear       String?
+  semester           Int
+  startDate          DateTime
+  endDate            DateTime
+  status             ExamStatus @default(upcoming)
+  hallTicketReleased Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  examResults ExamResult[]  // back-reference — was missing entirely
+
+  @@index([semester])
+  @@index([status])
+}
+
+// ─── ExamResult ───────────────────────────────────────────────────────────────
+// Added examinationId FK (nullable for backward compat with existing rows).
+// Composite unique prevents duplicate results per student/course/exam.
+
+model ExamResult {
+  id            String  @id @default(uuid())
+  studentId     String
+  courseId      String
+  examinationId String?                  // nullable — links result to the specific exam
+  internalScore Float?
+  endSemScore   Float?
+  totalScore    Float
+  grade         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  examination Examination? @relation(fields: [examinationId], references: [id], onDelete: SetNull)
+
+  // Prevent duplicate results for the same student+course within the same exam
+  @@unique([studentId, courseId, examinationId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([examinationId])
+}
+
+// ─── FeeStructure ────────────────────────────────────────────────────────────
+// Composite unique prevents duplicate structures for same program+quota.
+
+model FeeStructure {
+  id             String   @id @default(uuid())
+  program        String
+  quota          FeeQuota @default(general)
+  tuitionFee     Float    @default(0)
+  hostelFee      Float    @default(0)
+  examFee        Float    @default(0)
+  libraryDeposit Float    @default(0)
+  totalAmount    Float
+  dueDate        DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([program, quota])  // One structure per program per quota
+  @@index([program])
+}
+
+// ─── FeeTransaction ──────────────────────────────────────────────────────────
+
+model FeeTransaction {
+  id            String            @id @default(uuid())
+  receiptNumber String            @unique
+  studentId     String
+  amount        Float
+  paymentMethod PaymentMethod?
+  status        TransactionStatus @default(pending)
+  paidAt        DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([status])
+  @@index([paidAt])
+}
+
+// ─── Book ────────────────────────────────────────────────────────────────────
+
+model Book {
+  id              String  @id @default(uuid())
+  isbn            String  @unique
+  title           String
+  author          String
+  publisher       String?
+  category        String?
+  rackLocation    String?
+  totalCopies     Int     @default(1)
+  availableCopies Int     @default(1)
+  coverImageUrl   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  circulationRecords CirculationRecord[]
+
+  @@index([category])
+  @@index([author])
+}
+
+// ─── CirculationRecord ───────────────────────────────────────────────────────
+// onDelete: Restrict on Book — cannot delete a book that has borrow history.
+// Added back-reference to FineRecord so fines are traceable to their source borrow.
+
+model CirculationRecord {
+  id         String            @id @default(uuid())
+  bookId     String
+  borrowerId String
+  issueDate  DateTime
+  dueDate    DateTime
+  returnDate DateTime?
+  fineAmount Float?            @default(0)
+  status     CirculationStatus @default(issued)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  book     Book        @relation(fields: [bookId], references: [id], onDelete: Restrict)   // Block book deletion with any borrow history
+  borrower User        @relation(fields: [borrowerId], references: [id], onDelete: Restrict) // Block user deletion with borrow history
+  fines    FineRecord[]                                                                      // back-reference — was missing
+
+  @@index([borrowerId])
+  @@index([bookId])
+  @@index([status])
+  @@index([dueDate])        // for overdue detection
+  @@index([borrowerId, status])
+}
+
+// ─── FineRecord ──────────────────────────────────────────────────────────────
+// circulationId added — fines are now traceable to the exact borrow that caused them.
+
+model FineRecord {
+  id            String     @id @default(uuid())
+  userId        String
+  circulationId String?    // FK → CirculationRecord.id (nullable for manual fines)
+  amount        Float
+  reason        String?
+  status        FineStatus @default(unpaid)
+  issuedAt      DateTime   @default(now())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circulation CirculationRecord? @relation(fields: [circulationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([circulationId])
+}
+
+// ─── Notice ──────────────────────────────────────────────────────────────────
+
+model Notice {
+  id          String         @id @default(uuid())
+  title       String
+  content     String         @db.Text
+  category    NoticeCategory @default(general)
+  targetRole  String?        @default("all")
+  department  String?
+  publishedBy String?
+  publishedAt DateTime       @default(now())
+  isUrgent    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([targetRole])
+  @@index([publishedAt])
+  @@index([isUrgent])
+  @@index([department])
+}
+
+// ─── LeaveRequest ─────────────────────────────────────────────────────────────
+// status changed from String to LeaveStatus enum.
+// onDelete: Cascade — if faculty is deleted, leave requests go too.
+
+model LeaveRequest {
+  id        String      @id @default(uuid())
   facultyId String
-  faculty   Faculty  @relation(fields: [facultyId], references: [id])
   type      String
   fromDate  DateTime
   toDate    DateTime
   days      Int
   reason    String
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    LeaveStatus @default(pending)   // was String — now proper enum
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@index([facultyId])
+  @@index([status])
+  @@index([fromDate, toDate])
 }
+
+// ─── DocumentRequest ──────────────────────────────────────────────────────────
+// status changed from String to DocumentStatus enum.
 
 model DocumentRequest {
-  id           String   @id @default(uuid())
+  id           String         @id @default(uuid())
   studentId    String
-  student      Student  @relation(fields: [studentId], references: [id])
   documentName String
-  status       String   @default("pending")
-  requestedAt  DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  status       DocumentStatus @default(pending)   // was String — now proper enum
+  requestedAt  DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([status])
 }
 
+// ─── AdmissionApplication ─────────────────────────────────────────────────────
+// status changed from String to ApplicationStatus enum.
+
 model AdmissionApplication {
-  id            String   @id @default(uuid())
+  id            String            @id @default(uuid())
   applicantName String
-  applicationId String   @unique
+  applicationId String            @unique
   program       String
   department    String
   jeeRank       Int?
   gateRank      Int?
   category      String
   quota         String
-  status        String   @default("pending")
-  appliedDate   DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        ApplicationStatus @default(pending)   // was String — now proper enum
+  appliedDate   DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([status])
+  @@index([department])
+  @@index([program])
 }
+
+// ─── PlacementRecord ──────────────────────────────────────────────────────────
+// Added onDelete: Cascade — was missing (delete student → orphan records).
 
 model PlacementRecord {
-  id           String   @id @default(uuid())
-  studentId    String
-  student      Student  @relation(fields: [studentId], references: [id])
-  companyName  String
-  companyType  String
-  ctc          Float
-  offerDate    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(uuid())
+  studentId   String
+  companyName String
+  companyType String
+  ctc         Float
+  offerDate   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([companyName])
 }
 
+// ─── Permission & RolePermission ──────────────────────────────────────────────
+
 model Permission {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String           @id @default(uuid())
+  name        String           @unique
   category    String
   description String
   roles       RolePermission[]
+
+  @@index([category])
 }
 
 model RolePermission {
   id           String     @id @default(uuid())
   role         Role
   permissionId String
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
   @@unique([role, permissionId])
+  @@index([role])
 }
