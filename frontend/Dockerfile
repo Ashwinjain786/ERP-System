@@ -3,12 +3,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy root package files
-COPY package.json package-lock.json ./
+COPY package.json ./
 # Copy workspace definitions
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
-RUN npm ci
+RUN npm install
 
 COPY . .
 

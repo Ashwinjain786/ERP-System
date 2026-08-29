@@ -3,13 +3,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy root package files
-COPY package.json package-lock.json ./
+COPY package.json ./
 # Copy workspace definitions
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
 # Install dependencies (respects workspaces)
-RUN npm ci
+RUN npm install
 
 # Copy entire source code
 COPY . .
@@ -24,7 +24,7 @@ FROM node:20-alpine AS production
 WORKDIR /app
 
 # Copy node_modules and built assets
-COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/backend/package.json ./backend/
 COPY --from=builder /app/backend/dist ./backend/dist
