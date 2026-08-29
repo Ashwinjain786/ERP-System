@@ -44,14 +44,15 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      await login({ identifier, password });
+      const loggedInUser = await login({ identifier, password });
       
-      // Navigate based on their new role if login was successful
-      // The role might not be immediately available in the same render cycle for useAuth depending on implementation,
-      // But typically we can just redirect to / which will handle role-based routing, or to their designated dashboard.
-      // A safe fallback is to navigate to '/' and let the router handle it.
-      const from = (location.state as Record<string, string> | null)?.from || '/';
-      navigate(from, { replace: true });
+      const from = (location.state as Record<string, string> | null)?.from;
+      if (from && from !== '/') {
+        navigate(from, { replace: true });
+      } else {
+        const userRole = loggedInUser?.role || 'student';
+        navigate(`/${userRole}`, { replace: true });
+      }
     } catch (err: any) {
       setError('Invalid credentials. Please try again.');
     } finally {

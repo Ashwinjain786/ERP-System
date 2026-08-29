@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (input: LoginUserInput) => Promise<void>;
+  login: (input: LoginUserInput) => Promise<User | undefined | void>;
   logout: () => void;
   role: string | undefined;
 }
@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(TOKEN_KEY, res.token);
         setApiConfig({ headers: { Authorization: `Bearer ${res.token}` } });
         setUser(res.user as unknown as User);
+        return res.user as unknown as User;
       }
     } finally {
       setIsLoading(false);
