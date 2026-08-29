@@ -55,41 +55,11 @@ export default function AnalyticsAcademicPerformance() {
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: academic, isLoading } = useAcademicPerformanceAnalytics();
 
-  const cgpaDistribution = [
-    { range: '9-10', students: 120, color: 'hsl(136 40.5% 43.5%)' },
-    { range: '8-9', students: 350, color: 'hsl(26.1 100% 34.7%)' },
-    { range: '7-8', students: 480, color: 'hsl(41.5 100% 33.1%)' },
-    { range: '6-7', students: 380, color: 'hsl(181.3 100% 28%)' },
-    { range: '5-6', students: 180, color: 'hsl(37.7 68.6% 50%)' },
-    { range: '<5', students: 70, color: 'hsl(1.2 63.4% 48.2%)' },
-  ];
-
-  const backlogData = [
-    { semester: 'Sem 1', backlogs: 45 },
-    { semester: 'Sem 2', backlogs: 52 },
-    { semester: 'Sem 3', backlogs: 38 },
-    { semester: 'Sem 4', backlogs: 41 },
-    { semester: 'Sem 5', backlogs: 35 },
-    { semester: 'Sem 6', backlogs: 28 },
-    { semester: 'Sem 7', backlogs: 22 },
-    { semester: 'Sem 8', backlogs: 15 },
-  ];
-
-  const deptData = academic?.departmentPassRates || [
-    { department: 'Computer Science', passRate: 92.5 },
-    { department: 'Information Technology', passRate: 89.2 },
-    { department: 'Mechanical Engineering', passRate: 85.8 },
-    { department: 'Electrical Engineering', passRate: 87.3 },
-    { department: 'Civil Engineering', passRate: 84.1 },
-  ];
-
-  const toppers = [
-    { name: 'A. Sharma', cgpa: 9.85, dept: 'Computer Science' },
-    { name: 'B. Patel', cgpa: 9.72, dept: 'Information Technology' },
-    { name: 'C. Kumar', cgpa: 9.68, dept: 'Mechanical Engineering' },
-    { name: 'D. Singh', cgpa: 9.55, dept: 'Electrical Engineering' },
-    { name: 'E. Gupta', cgpa: 9.48, dept: 'Computer Science' },
-  ];
+  const cgpaDistribution = academic?.cgpaDistribution || [];
+  const backlogData = academic?.backlogBySemester || [];
+  const deptData = academic?.departmentPassRates || [];
+  const toppers = academic?.toppers || [];
+  const distinctionCount = cgpaDistribution.find((bucket) => bucket.range === '9-10')?.students || 0;
 
   if (isLoading) {
     return (
@@ -147,7 +117,7 @@ export default function AnalyticsAcademicPerformance() {
                 />
                 <StatCard 
                   label="Distinction" 
-                  value="185"
+                  value={distinctionCount}
                   subtext="CGPA 9.0 and above"
                   icon={BookOpen}
                   color="bg-violet-500"
@@ -213,7 +183,7 @@ export default function AnalyticsAcademicPerformance() {
                       />
                       <Bar dataKey="students" name="Students" radius={[4, 4, 0, 0]}>
                         {cgpaDistribution.map((entry, index) => (
-                          <Bar key={`cell-${index}`} fill={entry.color} dataKey="students" />
+                          <Bar key={`cell-${index}`} fill="hsl(26.1 100% 34.7%)" dataKey="students" />
                         ))}
                       </Bar>
                     </BarChart>
@@ -283,7 +253,7 @@ export default function AnalyticsAcademicPerformance() {
                         </span>
                         <div>
                           <p className="font-medium">{student.name}</p>
-                          <p className="text-sm text-muted-foreground">{student.dept}</p>
+                          <p className="text-sm text-muted-foreground">{student.department}</p>
                         </div>
                       </div>
                       <span className="font-mono font-bold text-lg text-primary">{student.cgpa}</span>

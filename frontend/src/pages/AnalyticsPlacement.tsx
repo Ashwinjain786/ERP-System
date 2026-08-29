@@ -57,38 +57,43 @@ export default function AnalyticsPlacement() {
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: placement, isLoading } = usePlacementAnalytics();
 
-  const ctcDistribution = [
+  /* const ctcDistribution = [
     { range: '3-5 LPA', students: 85, color: 'hsl(37.7 68.6% 50%)' },
     { range: '5-8 LPA', students: 145, color: 'hsl(41.5 100% 33.1%)' },
     { range: '8-12 LPA', students: 98, color: 'hsl(26.1 100% 34.7%)' },
     { range: '12-18 LPA', students: 42, color: 'hsl(181.3 100% 28%)' },
     { range: '>18 LPA', students: 10, color: 'hsl(136 40.5% 43.5%)' },
-  ];
+  ]; */
 
-  const companyTypeData = [
+  /* const companyTypeData = [
     { type: 'IT Services', count: 45 },
     { type: 'Product', count: 32 },
     { type: 'Consulting', count: 18 },
     { type: 'Finance', count: 15 },
     { type: 'Core Engineering', count: 12 },
-  ];
+  ]; */
 
-  const placementTrend = [
+  /* const placementTrend = [
     { year: '2020', placed: 280, total: 400 },
     { year: '2021', placed: 310, total: 420 },
     { year: '2022', placed: 295, total: 410 },
     { year: '2023', placed: 340, total: 450 },
     { year: '2024', placed: 380, total: 480 },
-  ];
+  ]; */
 
-  const recruiters = [
+  /* const recruiters = [
     { name: 'Google', offers: 12, avgCtc: 18.5, logo: '🔍' },
     { name: 'Microsoft', offers: 15, avgCtc: 16.2, logo: '🪟' },
     { name: 'Amazon', offers: 22, avgCtc: 14.8, logo: '📦' },
     { name: 'Meta', offers: 8, avgCtc: 15.5, logo: '📘' },
     { name: 'Adobe', offers: 10, avgCtc: 13.2, logo: '🎨' },
     { name: 'Goldman Sachs', offers: 6, avgCtc: 12.8, logo: '🏦' },
-  ];
+  ]; */
+
+  const ctcDistribution = placement?.ctcDistribution || [];
+  const companyTypeData = placement?.companyTypeDistribution || [];
+  const placementTrend = placement?.placementTrend || [];
+  const recruiters = placement?.topRecruiters || [];
 
   if (isLoading) {
     return (
@@ -139,14 +144,14 @@ export default function AnalyticsPlacement() {
                 />
                 <StatCard 
                   label="Average CTC" 
-                  value={`₹${placement?.averageCTC || 0}L`}
+                  value={`₹${((placement?.averageCTC || 0) / 100000).toFixed(1)}L`}
                   subtext="Cost to company"
                   icon={DollarSign}
                   color="bg-violet-500"
                 />
                 <StatCard 
                   label="Highest CTC" 
-                  value={`₹${placement?.highestCTC || 0}L`}
+                  value={`₹${((placement?.highestCTC || 0) / 100000).toFixed(1)}L`}
                   subtext="Top package offered"
                   icon={Award}
                   color="bg-amber-500"
@@ -183,8 +188,8 @@ export default function AnalyticsPlacement() {
                         }}
                       />
                       <Bar dataKey="students" name="Students" radius={[4, 4, 0, 0]}>
-                        {ctcDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {ctcDistribution.map((_entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -223,11 +228,11 @@ export default function AnalyticsPlacement() {
                       />
                       <Area 
                         type="monotone" 
-                        dataKey="total" 
+                        dataKey="offers"
                         stroke="hsl(var(--muted-foreground))" 
                         fill="hsl(var(--muted) / 0.2)" 
                         strokeWidth={2}
-                        name="Total Eligible"
+                        name="Offers"
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -251,13 +256,13 @@ export default function AnalyticsPlacement() {
                     {recruiters.map((company, index) => (
                       <div key={company.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                         <div className="flex items-center gap-3">
-                          <span className="text-2xl">{company.logo}</span>
+                          <span className="text-2xl">🏢</span>
                           <div>
                             <p className="font-medium">{company.name}</p>
                             <p className="text-sm text-muted-foreground">{company.offers} offers</p>
                           </div>
                         </div>
-                        <span className="font-mono font-bold text-primary">₹{company.avgCtc}L</span>
+                        <span className="font-mono font-bold text-primary">₹{company.averageCTC.toFixed(1)}L</span>
                       </div>
                     ))}
                   </div>

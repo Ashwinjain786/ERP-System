@@ -59,23 +59,19 @@ export default function AnalyticsAdmissions() {
 
   const funnelData = [
     { name: 'Applications', value: admissions?.totalApplications || 0, fill: COLORS[0] },
-    { name: 'Screened', value: Math.round((admissions?.totalApplications || 0) * 0.75), fill: COLORS[1] },
-    { name: 'Interviewed', value: Math.round((admissions?.totalApplications || 0) * 0.45), fill: COLORS[2] },
-    { name: 'Admitted', value: admissions?.admittedStudents || 0, fill: COLORS[3] },
+    ...(admissions?.statusBreakdown || []).map((entry, index) => ({
+      name: entry.status.charAt(0).toUpperCase() + entry.status.slice(1),
+      value: entry.count,
+      fill: COLORS[(index + 1) % COLORS.length],
+    })),
   ];
 
   const genderData = [
-    { name: 'Male', value: admissions?.genderRatio?.male || 58 },
-    { name: 'Female', value: admissions?.genderRatio?.female || 42 },
+    ...(admissions?.genderRatio?.male !== undefined ? [{ name: 'Male', value: admissions.genderRatio.male }] : []),
+    ...(admissions?.genderRatio?.female !== undefined ? [{ name: 'Female', value: admissions.genderRatio.female }] : []),
   ];
 
-  const programData = [
-    { program: 'B.Tech', applications: 1200, admitted: 220 },
-    { program: 'M.Tech', applications: 450, admitted: 85 },
-    { program: 'B.Sc', applications: 380, admitted: 65 },
-    { program: 'M.Sc', applications: 280, admitted: 45 },
-    { program: 'MBA', applications: 190, admitted: 35 },
-  ];
+  const programData = admissions?.programBreakdown || [];
 
   if (isLoading) {
     return (
@@ -249,22 +245,22 @@ export default function AnalyticsAdmissions() {
               <Card className="border-2 border-border/60 bg-gradient-to-br from-emerald-50 to-background">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium text-muted-foreground">Top Source College</p>
-                  <p className="mt-2 font-display text-2xl font-bold">Delhi Public School</p>
-                  <p className="mt-1 text-xs text-muted-foreground">85 admitted students</p>
+                  <p className="mt-2 font-display text-2xl font-bold">Not tracked</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Source college is not modeled in the database</p>
                 </CardContent>
               </Card>
               <Card className="border-2 border-border/60 bg-gradient-to-br from-blue-50 to-background">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium text-muted-foreground">Average Entrance Score</p>
-                  <p className="mt-2 font-display text-2xl font-bold">142/200</p>
-                  <p className="mt-1 text-xs text-muted-foreground">+8% vs last year</p>
+                  <p className="mt-2 font-display text-2xl font-bold">Not tracked</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Entrance score is not modeled in the database</p>
                 </CardContent>
               </Card>
               <Card className="border-2 border-border/60 bg-gradient-to-br from-violet-50 to-background">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium text-muted-foreground">International Students</p>
-                  <p className="mt-2 font-display text-2xl font-bold">23</p>
-                  <p className="mt-1 text-xs text-muted-foreground">From 8 countries</p>
+                  <p className="mt-2 font-display text-2xl font-bold">Not tracked</p>
+                  <p className="mt-1 text-xs text-muted-foreground">International status is not modeled in the database</p>
                 </CardContent>
               </Card>
             </div>

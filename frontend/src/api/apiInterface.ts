@@ -413,6 +413,8 @@ export interface AdmissionsMetrics {
   male?: number;
   female?: number;
 };
+  programBreakdown?: { program: string; applications: number; admitted: number }[];
+  statusBreakdown?: { status: string; count: number }[];
 }
 
 export interface AcademicMetrics {
@@ -423,14 +425,20 @@ export interface AcademicMetrics {
   department?: string;
   passRate?: number;
 }[];
+  cgpaDistribution?: { range: string; students: number }[];
+  backlogBySemester?: { semester: string; backlogs: number }[];
+  toppers?: { name: string; cgpa: number; department: string }[];
 }
 
 export interface PlacementMetrics {
   placementPercentage: number;
   averageCTC: number;
   highestCTC: number;
-  topRecruiters?: string[];
+  topRecruiters?: { name: string; offers: number; averageCTC: number }[];
   totalOffers: number;
+  ctcDistribution?: { range: string; students: number }[];
+  companyTypeDistribution?: { type: string; count: number }[];
+  placementTrend?: { year: string; placed: number; offers: number }[];
 }
 
 export type LoginUserOutput = AuthResponse;

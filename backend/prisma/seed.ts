@@ -26,6 +26,19 @@ async function main() {
     },
   });
 
+  // Management user — credentials for the executive Analytics portal.
+  const managementPassword = await bcrypt.hash('management123', 10);
+  await prisma.user.upsert({
+    where: { email: 'management@campus.edu' },
+    update: { name: 'Rohan Mehta', password: managementPassword, role: 'management' },
+    create: {
+      email: 'management@campus.edu',
+      name: 'Rohan Mehta',
+      password: managementPassword,
+      role: 'management',
+    },
+  });
+
   // 2. Librarian User
   const librarianPassword = await bcrypt.hash('librarian123', 10);
   await prisma.user.upsert({
@@ -484,6 +497,46 @@ async function main() {
       update: {},
       create: { role: 'finance_officer', permissionId },
     });
+  }
+
+  const viewAnalytics = await prisma.permission.upsert({
+    where: { name: 'view_analytics' },
+    update: {},
+    create: { name: 'view_analytics', category: 'Analytics', description: 'View institutional analytics and KPI reports' },
+  });
+  await prisma.rolePermission.upsert({
+    where: { role_permissionId: { role: 'management', permissionId: viewAnalytics.id } },
+    update: {},
+    create: { role: 'management', permissionId: viewAnalytics.id },
+  });
+
+  // 16. Connected academic and placement records for Analytics dashboards.
+  const examination = await prisma.examination.findFirst({ where: { title: 'End Semester Examination 2026', semester: 4 } }) || await prisma.examination.create({
+    data: {
+      title: 'End Semester Examination 2026',
+      academicYear: '2025-26',
+      semester: 4,
+      startDate: new Date('2026-04-01'),
+      endDate: new Date('2026-04-20'),
+      status: 'evaluated',
+      hallTicketReleased: true,
+    },
+  });
+  const examResults = [
+    { studentId: studentProfile.id, totalScore: 86, internalScore: 27, endSemScore: 59, grade: 'A' },
+    { studentId: student2Profile.id, totalScore: 64, internalScore: 22, endSemScore: 42, grade: 'B' },
+  ];
+  for (const result of examResults) {
+    const existing = await prisma.examResult.findFirst({ where: { studentId: result.studentId, courseId: course.id, examinationId: examination.id } });
+    if (!existing) await prisma.examResult.create({ data: { ...result, courseId: course.id, examinationId: examination.id } });
+  }
+  const placements = [
+    { studentId: studentProfile.id, companyName: 'Infosys', companyType: 'IT Services', ctc: 7.5, offerDate: new Date('2026-03-10') },
+    { studentId: student2Profile.id, companyName: 'Deloitte', companyType: 'Consulting', ctc: 10, offerDate: new Date('2026-03-15') },
+  ];
+  for (const placement of placements) {
+    const existing = await prisma.placementRecord.findFirst({ where: { studentId: placement.studentId, companyName: placement.companyName } });
+    if (!existing) await prisma.placementRecord.create({ data: placement });
   }
 
   console.log(`Finance seed ready: ${btechGeneral.program} fee structure and ${financeTransactions.length} ledger records.`);

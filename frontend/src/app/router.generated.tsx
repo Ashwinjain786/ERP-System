@@ -464,6 +464,10 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/management',
+    element: <Navigate to="/analytics" replace />,
+  },
+  {
     path: '/analytics/admissions',
     element: (
       <ProtectedRoute>

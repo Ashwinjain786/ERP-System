@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useFeeTransactions } from '@/features/finance/hooks';
 
 const COLORS = ['hsl(26.1 100% 34.7%)', 'hsl(41.5 100% 33.1%)', 'hsl(181.3 100% 28%)', 'hsl(229.3 44.5% 55.5%)', 'hsl(326.6 37% 46.7%)'];
 
@@ -60,56 +61,34 @@ function StatCard({ label, value, subtext, icon: Icon, color, trend }: {
 export default function AnalyticsFinancialHealth() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
+  const { data: transactions = [] } = useFeeTransactions();
 
-  const revenueData = [
-    { month: 'Jan', revenue: 2.8, expenses: 1.9 },
-    { month: 'Feb', revenue: 3.2, expenses: 2.1 },
-    { month: 'Mar', revenue: 2.5, expenses: 2.3 },
-    { month: 'Apr', revenue: 2.1, expenses: 1.8 },
-    { month: 'May', revenue: 2.9, expenses: 2.0 },
-    { month: 'Jun', revenue: 3.5, expenses: 2.2 },
-    { month: 'Jul', revenue: 4.2, expenses: 2.4 },
-    { month: 'Aug', revenue: 3.8, expenses: 2.3 },
-    { month: 'Sep', revenue: 3.1, expenses: 2.1 },
-    { month: 'Oct', revenue: 2.7, expenses: 1.9 },
-    { month: 'Nov', revenue: 3.0, expenses: 2.0 },
-    { month: 'Dec', revenue: 3.4, expenses: 2.2 },
-  ];
-
-  const budgetUtilization = [
-    { department: 'Academic', allocated: 8.5, utilized: 7.8 },
-    { department: 'Infrastructure', allocated: 4.2, utilized: 3.9 },
-    { department: 'Research', allocated: 3.5, utilized: 3.1 },
-    { department: 'Administration', allocated: 2.8, utilized: 2.5 },
-    { department: 'Student Services', allocated: 2.0, utilized: 1.8 },
-  ];
-
-  const expenseBreakdown = [
-    { name: 'Faculty Salaries', value: 45 },
-    { name: 'Infrastructure', value: 20 },
-    { name: 'Research', value: 12 },
-    { name: 'Operations', value: 15 },
-    { name: 'Other', value: 8 },
-  ];
-
-  const revenueBreakdown = [
-    { name: 'Tuition Fees', value: 65 },
-    { name: 'Government Grant', value: 20 },
-    { name: 'Research Funding', value: 10 },
-    { name: 'Other', value: 5 },
-  ];
-
-  const cashFlowData = [
-    { month: 'Q1', inflow: 8.5, outflow: 6.3 },
-    { month: 'Q2', inflow: 8.5, outflow: 6.0 },
-    { month: 'Q3', inflow: 10.1, outflow: 6.8 },
-    { month: 'Q4', inflow: 9.1, outflow: 6.1 },
-  ];
-
+  const liveRevenueData = React.useMemo(() => {
+    const byMonth = new Map<string, { month: string; revenue: number; expenses: number; sortKey: number }>();
+    transactions.filter((transaction) => transaction.status === 'success').forEach((transaction) => {
+      const date = new Date(transaction.paidAt || transaction.createdAt || 0);
+      if (Number.isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const row = byMonth.get(key) || { month: date.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), revenue: 0, expenses: 0, sortKey: date.getTime() };
+      row.revenue += transaction.amount / 10000000;
+      byMonth.set(key, row);
+    });
+    return Array.from(byMonth.values()).sort((a, b) => a.sortKey - b.sortKey);
+  }, [transactions]);
+  const revenueData = liveRevenueData;
   const totalRevenue = revenueData.reduce((sum, d) => sum + d.revenue, 0);
-  const totalExpenses = revenueData.reduce((sum, d) => sum + d.expenses, 0);
+  const totalExpenses = 0;
   const netSurplus = totalRevenue - totalExpenses;
-  const surplusPercentage = ((netSurplus / totalRevenue) * 100).toFixed(1);
+  const surplusPercentage = totalRevenue > 0 ? ((netSurplus / totalRevenue) * 100).toFixed(1) : '0.0';
+  const totalBilled = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const successfulAmount = transactions.filter((transaction) => transaction.status === 'success').reduce((sum, transaction) => sum + transaction.amount, 0);
+  const feeCollectionRate = totalBilled > 0 ? Math.round((successfulAmount / totalBilled) * 100) : 0;
+  const outstandingFees = transactions.filter((transaction) => transaction.status !== 'success').reduce((sum, transaction) => sum + transaction.amount, 0) / 10000000;
+  const fiscalLabel = `Recorded transactions (${transactions.length})`;
+  const budgetUtilization: { department: string; allocated: number; utilized: number }[] = [];
+  const expenseBreakdown: { name: string; value: number }[] = [];
+  const revenueBreakdown: { name: string; value: number }[] = totalRevenue > 0 ? Array.from(new Set(transactions.map((transaction) => transaction.paymentMethod).filter(Boolean))).map((method) => ({ name: method!, value: Math.round(transactions.filter((transaction) => transaction.status === 'success' && transaction.paymentMethod === method).reduce((sum, transaction) => sum + transaction.amount, 0) / (totalRevenue * 10000000) * 100) })) : [];
+  const cashFlowData: { month: string; inflow: number; outflow: number }[] = [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,34 +118,30 @@ export default function AnalyticsFinancialHealth() {
                 <StatCard 
                   label="Total Revenue" 
                   value={`₹${totalRevenue.toFixed(1)}Cr`}
-                  subtext="FY 2024-25"
+                  subtext={fiscalLabel}
                   icon={DollarSign}
                   color="bg-success"
-                  trend={{ value: 8.2, positive: true }}
                 />
                 <StatCard 
                   label="Total Expenses" 
                   value={`₹${totalExpenses.toFixed(1)}Cr`}
-                  subtext="FY 2024-25"
+                  subtext="Expense ledger not connected"
                   icon={TrendingDown}
                   color="bg-info"
-                  trend={{ value: 5.1, positive: false }}
                 />
                 <StatCard 
-                  label="Net Surplus" 
+                  label="Net Position (before expenses)"
                   value={`₹${netSurplus.toFixed(1)}Cr`}
-                  subtext={`${surplusPercentage}% margin`}
+                  subtext={totalExpenses > 0 ? `${surplusPercentage}% margin` : 'Expenses not connected'}
                   icon={PiggyBank}
                   color="bg-primary"
-                  trend={{ value: 12.5, positive: true }}
                 />
                 <StatCard 
                   label="Budget Utilization" 
-                  value="91%"
-                  subtext="Across all departments"
+                  value="N/A"
+                  subtext="Budget ledger not connected"
                   icon={TrendingUp}
                   color="bg-warning"
-                  trend={{ value: 3.2, positive: true }}
                 />
               </div>
             </Wrapper>
@@ -230,7 +205,7 @@ export default function AnalyticsFinancialHealth() {
                     <BarChart3 className="w-5 h-5 text-primary" />
                     Budget Utilization by Department
                   </CardTitle>
-                  <CardDescription>Allocated vs utilized budget</CardDescription>
+                  <CardDescription>{budgetUtilization.length ? 'Allocated vs utilized budget' : 'No budget ledger data available'}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -303,7 +278,7 @@ export default function AnalyticsFinancialHealth() {
                     <PieChart className="w-5 h-5 text-primary" />
                     Expense Breakdown
                   </CardTitle>
-                  <CardDescription>Major expenditure categories</CardDescription>
+                  <CardDescription>{expenseBreakdown.length ? 'Major expenditure categories' : 'No expense ledger data available'}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -341,7 +316,7 @@ export default function AnalyticsFinancialHealth() {
                     <TrendingUp className="w-5 h-5 text-primary" />
                     Quarterly Cash Flow
                   </CardTitle>
-                  <CardDescription>Inflow vs outflow by quarter</CardDescription>
+                  <CardDescription>{cashFlowData.length ? 'Inflow vs outflow by quarter' : 'No cash-flow ledger data available'}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -372,22 +347,22 @@ export default function AnalyticsFinancialHealth() {
               <Card className="border-2 border-border/60 bg-gradient-to-br from-success/20 to-background">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium text-muted-foreground">Fee Collection Rate</p>
-                  <p className="mt-2 font-display text-2xl font-bold">92%</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Above 85% target</p>
+                  <p className="mt-2 font-display text-2xl font-bold">{feeCollectionRate}%</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Based on recorded fee transactions</p>
                 </CardContent>
               </Card>
               <Card className="border-2 border-border/60 bg-gradient-to-br from-info/20 to-background">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium text-muted-foreground">Outstanding Fees</p>
-                  <p className="mt-2 font-display text-2xl font-bold">₹2.8Cr</p>
-                  <p className="mt-1 text-xs text-muted-foreground">3.2% of total</p>
+                  <p className="mt-2 font-display text-2xl font-bold">₹{outstandingFees.toFixed(1)}Cr</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Pending or failed transactions</p>
                 </CardContent>
               </Card>
               <Card className="border-2 border-border/60 bg-gradient-to-br from-primary/20 to-background">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium text-muted-foreground">Research Grant</p>
-                  <p className="mt-2 font-display text-2xl font-bold">₹4.5Cr</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Active projects</p>
+                  <p className="mt-2 font-display text-2xl font-bold">N/A</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Research grant ledger not connected</p>
                 </CardContent>
               </Card>
             </div>

@@ -9,7 +9,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useInstitutionalOverview, useAdmissionsAnalytics, useAcademicPerformanceAnalytics, usePlacementAnalytics } from '@/features/analytics/hooks';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -56,12 +55,16 @@ function StatCard({ label, value, subtext, icon: Icon, color, trend }: {
 export default function Analytics() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const { user } = useAuth();
-  
   const { data: overview } = useInstitutionalOverview();
   const { data: admissions } = useAdmissionsAnalytics();
   const { data: academic } = useAcademicPerformanceAnalytics();
-  const { data: placement } = usePlacementAnalytics();
+  const { data: placementData } = usePlacementAnalytics();
+  // The API stores CTC in rupees; this dashboard presents it in lakhs.
+  const placement = placementData ? {
+    ...placementData,
+    averageCTC: placementData.averageCTC / 100000,
+    highestCTC: placementData.highestCTC / 100000,
+  } : placementData;
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,7 +98,6 @@ export default function Analytics() {
                   subtext="Enrolled across all programs"
                   icon={Users}
                   color="bg-emerald-500"
-                  trend={{ value: 5.2, positive: true }}
                 />
                 <StatCard 
                   label="Faculty Ratio" 
@@ -110,7 +112,6 @@ export default function Analytics() {
                   subtext={`Avg CTC: ₹${placement?.averageCTC || 0}L`}
                   icon={TrendingUp}
                   color="bg-violet-500"
-                  trend={{ value: 3.1, positive: true }}
                 />
                 <StatCard 
                   label="Pass Rate" 
@@ -118,7 +119,6 @@ export default function Analytics() {
                   subtext="Overall academic performance"
                   icon={Activity}
                   color="bg-amber-500"
-                  trend={{ value: 1.8, positive: true }}
                 />
               </div>
             </Wrapper>
@@ -154,7 +154,7 @@ export default function Analytics() {
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                   <span className="text-muted-foreground">Gender Ratio (M:F)</span>
-                  <span className="font-mono font-bold tabular-nums">{admissions?.genderRatio?.male}:{admissions?.genderRatio?.female}</span>
+                  <span className="font-mono font-bold tabular-nums">{admissions?.genderRatio ? `${admissions.genderRatio.male}:${admissions.genderRatio.female}` : 'Not tracked'}</span>
                 </div>
               </div>
             </CardContent>
