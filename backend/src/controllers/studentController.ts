@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 import bcrypt from 'bcryptjs';
+import { AuthRequest } from '../middlewares/authMiddleware';
 
 export const getStudents = async (req: Request, res: Response) => {
   try {
@@ -40,6 +41,7 @@ export const getStudents = async (req: Request, res: Response) => {
       cgpa: s.cgpa,
       attendancePercentage: s.attendancePercentage,
       feeStatus: s.feeStatus,
+      feeQuota: s.feeQuota,
       avatarUrl: s.user.avatarUrl
     }));
 
@@ -51,7 +53,7 @@ export const getStudents = async (req: Request, res: Response) => {
 
 export const createStudent = async (req: Request, res: Response) => {
   try {
-    const { name, email, phone, department, degree, semester, batch, section } = req.body;
+    const { name, email, phone, department, degree, feeQuota, semester, batch, section } = req.body;
 
     // Generate roll number (mock logic)
     const rollNumber = `STU${new Date().getFullYear()}${Math.floor(1000 + Math.random() * 9000)}`;
@@ -69,6 +71,7 @@ export const createStudent = async (req: Request, res: Response) => {
             rollNumber,
             departmentId: department, // Assuming 'department' is an ID
             degree,
+            feeQuota,
             semester: semester || 1,
             batch,
             section
@@ -119,6 +122,7 @@ export const getStudentById = async (req: Request, res: Response) => {
       cgpa: student.cgpa,
       attendancePercentage: student.attendancePercentage,
       feeStatus: student.feeStatus,
+      feeQuota: student.feeQuota,
       avatarUrl: student.user.avatarUrl
     });
   } catch (error) {
@@ -253,8 +257,15 @@ export const getStudentDocuments = async (req: Request, res: Response) => {
   }
 };
 
-export const getStudentFees = async (req: Request, res: Response) => {
+export const getStudentFees = async (req: AuthRequest, res: Response) => {
   try {
+    if (req.user?.role === 'student') {
+      const ownProfile = await prisma.student.findUnique({ where: { userId: req.user.id }, select: { id: true } });
+      if (!ownProfile || ownProfile.id !== req.params.id) {
+        return res.status(403).json({ success: false, message: 'Students may only view their own fee ledger' });
+      }
+    }
+
     const student = await prisma.student.findUnique({
       where: { id: req.params.id },
       include: {
@@ -264,13 +275,20 @@ export const getStudentFees = async (req: Request, res: Response) => {
     if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
     // Look up the fee structure for this student's program
-    const feeStructure = await prisma.feeStructure.findFirst({
-      where: { program: student.degree || 'B.Tech' }
+    const feeStructure = await prisma.feeStructure.findUnique({
+      where: { program_quota: { program: student.degree || 'B.Tech', quota: student.feeQuota } },
     });
+    if (!feeStructure) {
+      return res.status(422).json({ success: false, message: 'No fee structure is configured for this student program' });
+    }
 
-    const totalAnnualFee = feeStructure ? feeStructure.totalAmount : 100000;
+    const totalAnnualFee = feeStructure.totalAmount;
     const totalPaid = student.feeTransactions.reduce((sum, t) => sum + t.amount, 0);
     const dueBalance = Math.max(0, totalAnnualFee - totalPaid);
+    const calculatedStatus = dueBalance === 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'due';
+    if (student.feeStatus !== calculatedStatus) {
+      await prisma.student.update({ where: { id: student.id }, data: { feeStatus: calculatedStatus } });
+    }
 
     // Fetch all transactions for the ledger (success + pending)
     const allTransactions = await prisma.feeTransaction.findMany({
@@ -283,7 +301,7 @@ export const getStudentFees = async (req: Request, res: Response) => {
       totalAnnualFee,
       totalPaid,
       dueBalance,
-      status: student.feeStatus,
+      status: calculatedStatus,
       transactions: allTransactions
     });
   } catch (error) {

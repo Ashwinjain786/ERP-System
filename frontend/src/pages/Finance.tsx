@@ -3,14 +3,12 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
   DollarSign, TrendingUp, AlertTriangle, ArrowRight,
-  Building2, CreditCard, FileText, Users
+  Building2, CreditCard, FileText
 } from 'lucide-react';
-import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useFeeStructures, useFeeTransactions, useFeeDefaulters } from '@/features/finance/hooks';
-import { useAuth } from '@/contexts/AuthContext';
+import { useFeeTransactions, useFeeDefaulters } from '@/features/finance/hooks';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -57,15 +55,15 @@ function StatCard({ label, value, subtext, icon: Icon, color, trend }: {
 export default function Finance() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const { user } = useAuth();
-  
   const { data: transactions } = useFeeTransactions();
   const { data: defaulters } = useFeeDefaulters();
-  const { data: structures } = useFeeStructures();
 
   const totalCollected = transactions?.filter(t => t.status === 'success').reduce((acc, t) => acc + t.amount, 0) || 0;
   const totalPending = transactions?.filter(t => t.status === 'pending').reduce((acc, t) => acc + t.amount, 0) || 0;
   const totalDefaulters = defaulters?.reduce((acc, d) => acc + d.dueAmount, 0) || 0;
+  const collectionRate = totalCollected + totalDefaulters > 0
+    ? (totalCollected / (totalCollected + totalDefaulters)) * 100
+    : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,7 +91,6 @@ export default function Finance() {
                   subtext={`${transactions?.filter(t => t.status === 'success').length || 0} successful transactions`}
                   icon={DollarSign}
                   color="bg-emerald-500"
-                  trend={{ value: 8.2, positive: true }}
                 />
                 <StatCard 
                   label="Pending Payments" 
@@ -111,11 +108,10 @@ export default function Finance() {
                 />
                 <StatCard 
                   label="Collection Rate" 
-                  value="78.5%"
+                  value={`${collectionRate.toFixed(1)}%`}
                   subtext="Of total fee expected"
                   icon={Building2}
                   color="bg-blue-500"
-                  trend={{ value: 2.1, positive: true }}
                 />
               </div>
             </Wrapper>

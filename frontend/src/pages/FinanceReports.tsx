@@ -9,7 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useFeeStructures, useFeeTransactions, useFeeDefaulters } from '@/features/finance/hooks';
+import { useFeeTransactions, useFeeDefaulters } from '@/features/finance/hooks';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -40,38 +40,53 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 export default function FinanceReports() {
-  const { data: structures } = useFeeStructures();
   const { data: transactions } = useFeeTransactions();
   const { data: defaulters } = useFeeDefaulters();
   const [timeRange, setTimeRange] = useState('all');
   const shouldReduceMotion = useReducedMotion();
 
-  const totalRevenue = transactions?.filter(t => t.status === 'success').reduce((sum, t) => sum + t.amount, 0) || 0;
-  const pendingAmount = transactions?.filter(t => t.status === 'pending').reduce((sum, t) => sum + t.amount, 0) || 0;
+  const filteredTransactions = React.useMemo(() => {
+    if (!transactions || timeRange === 'all') return transactions || [];
+    const months = timeRange === '3M' ? 3 : timeRange === '6M' ? 6 : 12;
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - months);
+    return transactions.filter((transaction) => new Date(transaction.createdAt || transaction.paidAt || 0) >= cutoff);
+  }, [timeRange, transactions]);
+
+  const totalRevenue = filteredTransactions.filter(t => t.status === 'success').reduce((sum, t) => sum + t.amount, 0);
+  const pendingAmount = filteredTransactions.filter(t => t.status === 'pending').reduce((sum, t) => sum + t.amount, 0);
   const totalDue = defaulters?.reduce((sum, d) => sum + d.dueAmount, 0) || 0;
   const collectionRate = (totalRevenue / (totalRevenue + totalDue)) * 100 || 0;
 
-  const programRevenue = React.useMemo(() => structures?.map((s, idx) => ({
-    name: `${s.program} (${s.quota || 'general'})`,
-    revenue: s.totalAmount,
-    students: (idx * 7 % 40) + 10,
-  })) || [], [structures]);
+  const programRevenue = React.useMemo(() => {
+    const totals = new Map<string, number>();
+    filteredTransactions.filter((transaction) => transaction.status === 'success').forEach((transaction) => {
+      const name = `${transaction.program || 'Unassigned'} (${transaction.quota || 'general'})`;
+      totals.set(name, (totals.get(name) || 0) + transaction.amount);
+    });
+    return Array.from(totals, ([name, revenue]) => ({ name, revenue }));
+  }, [filteredTransactions]);
 
-  const paymentMethodData = transactions ? [
-    { name: 'UPI', value: transactions.filter(t => t.paymentMethod === 'UPI').reduce((s, t) => s + t.amount, 0) },
-    { name: 'NetBanking', value: transactions.filter(t => t.paymentMethod === 'NetBanking').reduce((s, t) => s + t.amount, 0) },
-    { name: 'Card', value: transactions.filter(t => t.paymentMethod?.includes('Card')).reduce((s, t) => s + t.amount, 0) },
-    { name: 'Challan', value: transactions.filter(t => t.paymentMethod === 'Challan').reduce((s, t) => s + t.amount, 0) },
+  const paymentMethodData = filteredTransactions ? [
+    { name: 'UPI', value: filteredTransactions.filter(t => t.status === 'success' && t.paymentMethod === 'UPI').reduce((s, t) => s + t.amount, 0) },
+    { name: 'NetBanking', value: filteredTransactions.filter(t => t.status === 'success' && t.paymentMethod === 'NetBanking').reduce((s, t) => s + t.amount, 0) },
+    { name: 'Card', value: filteredTransactions.filter(t => t.status === 'success' && t.paymentMethod?.includes('Card')).reduce((s, t) => s + t.amount, 0) },
+    { name: 'Challan', value: filteredTransactions.filter(t => t.status === 'success' && t.paymentMethod === 'Challan').reduce((s, t) => s + t.amount, 0) },
   ] : [];
 
-  const monthlyData = [
-    { month: 'Jan', collections: 450000, dues: 120000 },
-    { month: 'Feb', collections: 380000, dues: 95000 },
-    { month: 'Mar', collections: 520000, dues: 150000 },
-    { month: 'Apr', collections: 610000, dues: 180000 },
-    { month: 'May', collections: 480000, dues: 140000 },
-    { month: 'Jun', collections: 550000, dues: 160000 },
-  ];
+  const monthlyData = React.useMemo(() => {
+    const totals = new Map<string, { month: string; sortKey: number; collections: number; pending: number }>();
+    filteredTransactions.forEach((transaction) => {
+      const date = new Date(transaction.createdAt || transaction.paidAt || 0);
+      if (Number.isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const row = totals.get(key) || { month: date.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), sortKey: new Date(date.getFullYear(), date.getMonth(), 1).getTime(), collections: 0, pending: 0 };
+      if (transaction.status === 'success') row.collections += transaction.amount;
+      if (transaction.status === 'pending') row.pending += transaction.amount;
+      totals.set(key, row);
+    });
+    return Array.from(totals.values()).sort((a, b) => a.sortKey - b.sortKey);
+  }, [filteredTransactions]);
 
   const statusData = [
     { name: 'Paid', value: totalRevenue, color: 'hsl(136, 40.5%, 43.5%)' },
@@ -150,7 +165,7 @@ export default function FinanceReports() {
         >
           <Card className="h-full">
             <CardHeader>
-              <CardTitle className="text-lg font-display">Monthly Collections vs Dues</CardTitle>
+              <CardTitle className="text-lg font-display">Monthly Payment Activity</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -161,7 +176,7 @@ export default function FinanceReports() {
                   <Tooltip content={<CustomTooltip />} />
                   <Legend wrapperStyle={{ fontFamily: 'Rubik', fontSize: 12 }} />
                   <Line type="monotone" dataKey="collections" stroke="hsl(136, 40.5%, 43.5%)" strokeWidth={2} dot={{ r: 4 }} name="Collections" />
-                  <Line type="monotone" dataKey="dues" stroke="hsl(1.2, 63.4%, 48.2%)" strokeWidth={2} dot={{ r: 4 }} name="Dues" />
+                  <Line type="monotone" dataKey="pending" stroke="hsl(37.7, 68.6%, 50%)" strokeWidth={2} dot={{ r: 4 }} name="Pending" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>

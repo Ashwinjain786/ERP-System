@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useFeeTransactions } from '@/features/finance/hooks';
+import { useFeeTransactions, useUpdateFeeTransactionStatus } from '@/features/finance/hooks';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 };
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return 'Awaiting reconciliation';
   return new Date(dateStr).toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
@@ -44,9 +45,11 @@ const getPaymentIcon = (method: string | undefined) => {
 
 export default function FinanceTransactions() {
   const { data: transactions, isLoading } = useFeeTransactions();
+  const updateStatus = useUpdateFeeTransactionStatus();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
+  const [actionError, setActionError] = useState('');
   const shouldReduceMotion = useReducedMotion();
 
   const filteredTransactions = transactions?.filter(t => {
@@ -81,8 +84,17 @@ export default function FinanceTransactions() {
   };
 
   const handleReceiptClick = (transaction: typeof transactions extends (infer T)[] | undefined ? T : never) => {
-    const t = transaction as { receiptNumber: string; studentName?: string; amount: number; paymentMethod?: string; status: string; paidAt: string };
+    const t = transaction as { receiptNumber: string; studentName?: string; amount: number; paymentMethod?: string; status: string; paidAt?: string | null };
     alert(`Receipt: ${t.receiptNumber}\nStudent: ${t.studentName || 'N/A'}\nAmount: ${formatCurrency(t.amount)}\nMethod: ${t.paymentMethod || 'N/A'}\nStatus: ${t.status}\nDate: ${formatDate(t.paidAt)}`);
+  };
+
+  const settleTransaction = async (id: string, status: 'success' | 'failed') => {
+    setActionError('');
+    try {
+      await updateStatus.mutateAsync({ id, status });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Unable to reconcile payment.');
+    }
   };
 
   return (
@@ -95,6 +107,8 @@ export default function FinanceTransactions() {
         <h1 className="text-3xl font-bold font-display text-foreground">Payment Ledger</h1>
         <p className="text-muted-foreground font-body mt-1">View and manage all fee transactions</p>
       </motion.div>
+
+      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
       <motion.div 
         initial={{ opacity: 0 }}
@@ -204,14 +218,22 @@ export default function FinanceTransactions() {
                             {transaction.status}
                           </span>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="font-body"
-                          onClick={() => handleReceiptClick(transaction)}
-                        >
-                          Receipt
-                        </Button>
+                        <div className="flex gap-2">
+                          {transaction.status === 'pending' && (
+                            <>
+                              <Button size="sm" disabled={updateStatus.isPending} onClick={() => settleTransaction(transaction.id, 'success')}>Approve</Button>
+                              <Button size="sm" variant="outline" disabled={updateStatus.isPending} onClick={() => settleTransaction(transaction.id, 'failed')}>Reject</Button>
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="font-body"
+                            onClick={() => handleReceiptClick(transaction)}
+                          >
+                            Receipt
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

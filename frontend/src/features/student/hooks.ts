@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { getLibraryCirculation, getAllExaminations } from '@/api/customApi';
 import {
@@ -9,9 +9,10 @@ import {
   getCourses,
   getTimetables,
   getNotices,
-  getStudentDocuments
+  getStudentDocuments,
+  recordFeePayment,
 } from '@/api/apiCall';
-import type { Examination, CirculationRecord } from '@/api/apiInterface';
+import type { Examination, CirculationRecord, PaymentInput } from '@/api/apiInterface';
 
 export function useStudentProfile() {
   const { user } = useAuth();
@@ -66,6 +67,16 @@ export function useStudentFees() {
       return await getStudentFees({ id: studentId });
     },
     enabled: !!studentId,
+  });
+}
+
+export function useSubmitStudentFeePayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: PaymentInput) => recordFeePayment(input),
+    onSuccess: (_transaction, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'fees', variables.studentId] });
+    },
   });
 }
 

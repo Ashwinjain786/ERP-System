@@ -46,6 +46,7 @@ export interface Student {
   cgpa?: number;
   attendancePercentage?: number;
   feeStatus?: 'paid' | 'partial' | 'due';
+  feeQuota?: 'general' | 'merit' | 'management' | 'nri';
   avatarUrl?: string;
 }
 
@@ -55,6 +56,7 @@ export interface StudentInput {
   phone?: string;
   department: string;
   degree: string;
+  feeQuota?: 'general' | 'merit' | 'management' | 'nri';
   semester: number;
   batch: string;
   section?: string;
@@ -269,6 +271,8 @@ export interface FeeStructureInput {
   tuitionFee: number;
   hostelFee?: number;
   examFee?: number;
+  libraryDeposit?: number;
+  dueDate?: string;
 }
 
 export interface FeeTransaction {
@@ -279,7 +283,10 @@ export interface FeeTransaction {
   amount: number;
   paymentMethod?: 'UPI' | 'NetBanking' | 'CreditCard' | 'DebitCard' | 'Challan' | 'DemandDraft';
   status: 'success' | 'pending' | 'failed' | 'refunded';
-  paidAt: string;
+  paidAt?: string | null;
+  createdAt?: string;
+  program?: string;
+  quota?: 'general' | 'merit' | 'management' | 'nri';
 }
 
 export interface PaymentInput {
@@ -624,6 +631,11 @@ export interface GetFeeTransactionsInput {
 export type RecordFeePaymentOutput = FeeTransaction;
 
 export interface RecordFeePaymentInput extends PaymentInput {}
+
+export interface UpdateFeeTransactionStatusInput {
+  id: string;
+  status: 'success' | 'failed' | 'refunded';
+}
 
 export type GetFeeDefaultersOutput = FeeDefaulter[];
 

@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useStudentFees } from '@/features/student/hooks';
+import { useStudentFees, useSubmitStudentFeePayment } from '@/features/student/hooks';
 import { cn } from '@/lib/utils';
 import type { FeeTransaction } from '@/api/apiInterface';
 
@@ -38,7 +38,7 @@ function TransactionRow({ transaction }: { transaction: FeeTransaction }) {
         <div>
           <p className="font-semibold text-foreground">{transaction.receiptNumber}</p>
           <p className="text-sm text-muted-foreground">
-            {format(new Date(transaction.paidAt), 'MMM d, yyyy • h:mm a')}
+            {transaction.paidAt ? format(new Date(transaction.paidAt), 'MMM d, yyyy • h:mm a') : 'Awaiting reconciliation'}
           </p>
           <p className="text-xs text-muted-foreground mt-1">{transaction.paymentMethod}</p>
         </div>
@@ -82,10 +82,23 @@ export default function StudentFees() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: fees, isLoading, error } = useStudentFees();
+  const submitPayment = useSubmitStudentFeePayment();
+  const [paymentMessage, setPaymentMessage] = React.useState('');
 
   const isPaid = fees?.status === 'paid';
   const isPartial = fees?.status === 'partial';
   const paidPercentage = fees?.totalAnnualFee ? Math.round((fees.totalPaid / fees.totalAnnualFee) * 100) : 0;
+
+  const requestPayment = async () => {
+    if (!fees?.studentId || !fees.dueBalance) return;
+    setPaymentMessage('');
+    try {
+      await submitPayment.mutateAsync({ studentId: fees.studentId, amount: fees.dueBalance, paymentMethod: 'UPI' });
+      setPaymentMessage('Payment request submitted. The Finance Office will reconcile it shortly.');
+    } catch (requestError) {
+      setPaymentMessage(requestError instanceof Error ? requestError.message : 'Unable to submit payment request.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,9 +114,9 @@ export default function StudentFees() {
                   </p>
                 </div>
                 {!isPaid && (
-                  <Button className="gap-2">
+                  <Button className="gap-2" onClick={requestPayment} disabled={submitPayment.isPending || !fees?.dueBalance}>
                     <CreditCard className="w-4 h-4" />
-                    Pay Now
+                    {submitPayment.isPending ? 'Submitting…' : 'Pay Now'}
                   </Button>
                 )}
               </div>
@@ -191,6 +204,9 @@ export default function StudentFees() {
                   </CardContent>
                 </Card>
               </Wrapper>
+            )}
+            {paymentMessage && (
+              <p className={`mt-4 text-sm ${paymentMessage.startsWith('Payment request') ? 'text-success' : 'text-destructive'}`}>{paymentMessage}</p>
             )}
           </Wrapper>
         </div>

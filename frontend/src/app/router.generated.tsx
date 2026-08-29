@@ -370,6 +370,10 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/finance_officer',
+    element: <Navigate to="/finance" replace />,
+  },
+  {
     path: '/finance/structures',
     element: (
       <ProtectedRoute>

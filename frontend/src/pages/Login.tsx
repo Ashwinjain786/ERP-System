@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardPath } from '@/lib/dashboardRoutes';
 
 const container = {
   hidden: {},
@@ -51,8 +52,7 @@ export default function Login() {
         navigate(from, { replace: true });
       } else {
         const userRole = loggedInUser?.role || 'student';
-        const dashboardPath = userRole === 'librarian' ? '/library' : `/${userRole}`;
-        navigate(dashboardPath, { replace: true });
+        navigate(getDashboardPath(userRole), { replace: true });
       }
     } catch (err: any) {
       setError('Invalid credentials. Please try again.');

@@ -73,6 +73,8 @@ import {
   GetFeeTransactionsOutput,
   RecordFeePaymentInput,
   RecordFeePaymentOutput,
+  UpdateFeeTransactionStatusInput,
+  FeeTransaction,
   GetFeeDefaultersInput,
   GetFeeDefaultersOutput,
   GetLibraryBooksInput,
@@ -650,6 +652,18 @@ export const recordFeePayment = async (input: RecordFeePaymentInput): Promise<Re
   });
 };
 
+export const updateFeeTransactionStatus = async (input: UpdateFeeTransactionStatusInput): Promise<FeeTransaction> => {
+  return request<FeeTransaction>({
+    operationId: 'updateFeeTransactionStatus',
+    method: 'PATCH',
+    path: '/fees/transactions/{id}/status',
+    input,
+    pathParams: ['id'],
+    queryParams: [],
+    headerParams: [],
+  });
+};
+
 export const getFeeDefaulters = async (input: GetFeeDefaultersInput): Promise<GetFeeDefaultersOutput> => {
   return request<GetFeeDefaultersOutput>({
     operationId: 'getFeeDefaulters',
@@ -793,4 +807,3 @@ export const getPlacementAnalytics = async (_input?: GetPlacementAnalyticsInput)
     headerParams: []
   });
 };
-

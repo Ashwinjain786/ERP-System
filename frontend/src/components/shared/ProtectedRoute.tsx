@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/shared/AppLayout';
+import { getDashboardPath } from '@/lib/dashboardRoutes';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -27,7 +28,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   const isLibraryManagementRoute = location.pathname === '/library' || location.pathname.startsWith('/library/');
   if (isLibraryManagementRoute && role !== 'librarian' && role !== 'admin') {
-    return <Navigate to={role ? `/${role}` : '/login'} replace />;
+    return <Navigate to={getDashboardPath(role)} replace />;
+  }
+
+  const isFinanceManagementRoute = location.pathname === '/finance' || location.pathname.startsWith('/finance/');
+  if (isFinanceManagementRoute && role !== 'finance_officer' && role !== 'admin') {
+    return <Navigate to={getDashboardPath(role)} replace />;
   }
 
   return <AppLayout>{children}</AppLayout>;

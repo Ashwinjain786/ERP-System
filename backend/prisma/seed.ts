@@ -39,6 +39,25 @@ async function main() {
     },
   });
 
+  // 3. Finance Officer User — credentials for the Finance Office portal.
+  const financePassword = await bcrypt.hash('finance123', 10);
+  await prisma.user.upsert({
+    where: { email: 'finance@campus.edu' },
+    update: {
+      name: 'Kavita Iyer',
+      password: financePassword,
+      role: 'finance_officer',
+      phone: '+91-9876543210',
+    },
+    create: {
+      email: 'finance@campus.edu',
+      name: 'Kavita Iyer',
+      password: financePassword,
+      role: 'finance_officer',
+      phone: '+91-9876543210',
+    },
+  });
+
   // 3. Department
   const csDept = await prisma.department.upsert({
     where: { code: 'CSE' },
@@ -88,6 +107,21 @@ async function main() {
           batch: '2022-2026'
         },
       },
+    },
+  });
+
+  // Finance needs a deterministic program to resolve the fee structure.
+  const studentProfile = await prisma.student.findUniqueOrThrow({ where: { userId: studentUser.id } });
+  await prisma.student.update({
+    where: { id: studentProfile.id },
+    data: {
+      rollNumber: '22CS001',
+      departmentId: csDept.id,
+      degree: 'B.Tech',
+      feeQuota: 'general',
+      semester: 4,
+      section: 'A',
+      batch: '2022-2026',
     },
   });
 
@@ -316,7 +350,7 @@ async function main() {
 
   // 14. A second Student for richer data
   const student2Password = await bcrypt.hash('student123', 10);
-  await prisma.user.upsert({
+  const student2User = await prisma.user.upsert({
     where: { email: 'priya@campus.edu' },
     update: {},
     create: {
@@ -335,6 +369,124 @@ async function main() {
       },
     },
   });
+
+  const student2Profile = await prisma.student.findUniqueOrThrow({ where: { userId: student2User.id } });
+  await prisma.student.update({
+    where: { id: student2Profile.id },
+    data: {
+      rollNumber: '22CS002',
+      departmentId: csDept.id,
+      degree: 'B.Tech',
+      feeQuota: 'general',
+      semester: 4,
+      section: 'A',
+      batch: '2022-2026',
+    },
+  });
+
+  // 15. Finance master data and ledger records. These are idempotent and cover
+  // complete, partial, and pending-payment states for the Finance dashboards.
+  const overdueDueDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  const btechGeneral = await prisma.feeStructure.upsert({
+    where: { program_quota: { program: 'B.Tech', quota: 'general' } },
+    update: {
+      tuitionFee: 110000,
+      hostelFee: 25000,
+      examFee: 5000,
+      libraryDeposit: 5000,
+      totalAmount: 145000,
+      dueDate: overdueDueDate,
+    },
+    create: {
+      program: 'B.Tech',
+      quota: 'general',
+      tuitionFee: 110000,
+      hostelFee: 25000,
+      examFee: 5000,
+      libraryDeposit: 5000,
+      totalAmount: 145000,
+      dueDate: overdueDueDate,
+    },
+  });
+  await prisma.feeStructure.upsert({
+    where: { program_quota: { program: 'B.Tech', quota: 'merit' } },
+    update: {
+      tuitionFee: 80000,
+      hostelFee: 25000,
+      examFee: 5000,
+      libraryDeposit: 5000,
+      totalAmount: 115000,
+      dueDate: overdueDueDate,
+    },
+    create: {
+      program: 'B.Tech',
+      quota: 'merit',
+      tuitionFee: 80000,
+      hostelFee: 25000,
+      examFee: 5000,
+      libraryDeposit: 5000,
+      totalAmount: 115000,
+      dueDate: overdueDueDate,
+    },
+  });
+  await prisma.feeStructure.upsert({
+    where: { program_quota: { program: 'M.Tech', quota: 'general' } },
+    update: {
+      tuitionFee: 90000,
+      hostelFee: 25000,
+      examFee: 5000,
+      libraryDeposit: 5000,
+      totalAmount: 125000,
+      dueDate: overdueDueDate,
+    },
+    create: {
+      program: 'M.Tech',
+      quota: 'general',
+      tuitionFee: 90000,
+      hostelFee: 25000,
+      examFee: 5000,
+      libraryDeposit: 5000,
+      totalAmount: 125000,
+      dueDate: overdueDueDate,
+    },
+  });
+
+  const financeTransactions = [
+    { receiptNumber: 'SEED-FIN-001', studentId: studentProfile.id, amount: 60000, paymentMethod: 'UPI' as const, status: 'success' as const, paidAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000) },
+    { receiptNumber: 'SEED-FIN-002', studentId: student2Profile.id, amount: 25000, paymentMethod: 'NetBanking' as const, status: 'success' as const, paidAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+    { receiptNumber: 'SEED-FIN-003', studentId: student2Profile.id, amount: 15000, paymentMethod: 'Challan' as const, status: 'pending' as const, paidAt: null },
+  ];
+  for (const transaction of financeTransactions) {
+    await prisma.feeTransaction.upsert({
+      where: { receiptNumber: transaction.receiptNumber },
+      update: transaction,
+      create: transaction,
+    });
+  }
+  await prisma.student.updateMany({
+    where: { id: { in: [studentProfile.id, student2Profile.id] } },
+    data: { feeStatus: 'partial' },
+  });
+
+  const manageFees = await prisma.permission.upsert({
+    where: { name: 'manage_fees' },
+    update: {},
+    create: { name: 'manage_fees', category: 'Finance', description: 'Create fee structures and reconcile payments' },
+  });
+  const viewTransactions = await prisma.permission.upsert({
+    where: { name: 'view_transactions' },
+    update: {},
+    create: { name: 'view_transactions', category: 'Finance', description: 'View finance transactions and fee ledgers' },
+  });
+  for (const permissionId of [manageFees.id, viewTransactions.id]) {
+    await prisma.rolePermission.upsert({
+      where: { role_permissionId: { role: 'finance_officer', permissionId } },
+      update: {},
+      create: { role: 'finance_officer', permissionId },
+    });
+  }
+
+  console.log(`Finance seed ready: ${btechGeneral.program} fee structure and ${financeTransactions.length} ledger records.`);
 
   console.log('Seeding completed successfully!');
 }
