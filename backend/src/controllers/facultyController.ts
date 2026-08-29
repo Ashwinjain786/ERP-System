@@ -164,3 +164,14 @@ export const getFacultyWorkload = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const getLeaveRequests = async (req: Request, res: Response) => {
+  try {
+    const leaves = await prisma.leaveRequest.findMany({
+      where: { facultyId: req.params.id }
+    });
+    res.json(leaves);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

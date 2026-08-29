@@ -62,12 +62,14 @@ model Student {
   attendancePercentage Float?   @default(0.0)
   feeStatus            FeeStatus @default(due)
   
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department Department @relation(fields: [departmentId], references: [id])
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department           Department        @relation(fields: [departmentId], references: [id])
   
-  attendanceRecords AttendanceRecord[]
-  examResults       ExamResult[]
-  feeTransactions   FeeTransaction[]
+  attendanceRecords    AttendanceRecord[]
+  examResults          ExamResult[]
+  feeTransactions      FeeTransaction[]
+  documentRequests     DocumentRequest[]
+  placements           PlacementRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,11 +91,11 @@ model Faculty {
   weeklyWorkloadHours Float?   @default(0)
   leaveBalance        Float?   @default(0)
 
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department Department @relation(fields: [departmentId], references: [id])
-
-  timetables TimetableEntry[]
-  courses    Course[] // Courses instructed by faculty
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department       Department       @relation(fields: [departmentId], references: [id])
+  courses          Course[]
+  timetableEntries TimetableEntry[]
+  leaveRequests    LeaveRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -331,4 +333,72 @@ enum NoticeCategory {
   events
   fee
   general
+}
+
+model LeaveRequest {
+  id        String   @id @default(uuid())
+  facultyId String
+  faculty   Faculty  @relation(fields: [facultyId], references: [id])
+  type      String
+  fromDate  DateTime
+  toDate    DateTime
+  days      Int
+  reason    String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DocumentRequest {
+  id           String   @id @default(uuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id])
+  documentName String
+  status       String   @default("pending")
+  requestedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AdmissionApplication {
+  id            String   @id @default(uuid())
+  applicantName String
+  applicationId String   @unique
+  program       String
+  department    String
+  jeeRank       Int?
+  gateRank      Int?
+  category      String
+  quota         String
+  status        String   @default("pending")
+  appliedDate   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PlacementRecord {
+  id           String   @id @default(uuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id])
+  companyName  String
+  companyType  String
+  ctc          Float
+  offerDate    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  category    String
+  description String
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  role         Role
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  
+  @@unique([role, permissionId])
 }

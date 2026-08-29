@@ -30,11 +30,16 @@ export const getInstitutionalOverview = async (req: Request, res: Response) => {
 
 export const getAdmissionsAnalytics = async (req: Request, res: Response) => {
   try {
+    const apps = await prisma.admissionApplication.findMany();
+    const totalApplications = apps.length;
+    const admittedStudents = apps.filter(a => a.status === 'approved').length;
+    const acceptanceRate = totalApplications > 0 ? Math.round((admittedStudents / totalApplications) * 100) : 0;
+    
     res.json({
-      totalApplications: 5000,
-      admittedStudents: 1200,
-      acceptanceRate: 24,
-      genderRatio: { male: 60, female: 40 }
+      totalApplications,
+      admittedStudents,
+      acceptanceRate,
+      genderRatio: { male: 60, female: 40 } // Gender requires adding to Applicant model if tracked
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -59,12 +64,38 @@ export const getAcademicPerformanceAnalytics = async (req: Request, res: Respons
 
 export const getPlacementAnalytics = async (req: Request, res: Response) => {
   try {
+    const placements = await prisma.placementRecord.findMany();
+
+    const totalOffers = placements.length;
+    let highestCTC = 0;
+    let totalCTC = 0;
+
+    const recruitersMap = new Map<string, { offers: number, ctc: number }>();
+
+    placements.forEach(p => {
+      if (p.ctc > highestCTC) highestCTC = p.ctc;
+      totalCTC += p.ctc;
+      
+      const r = recruitersMap.get(p.companyName) || { offers: 0, ctc: 0 };
+      r.offers += 1;
+      r.ctc += p.ctc;
+      recruitersMap.set(p.companyName, r);
+    });
+
+    const averageCTC = totalOffers > 0 ? (totalCTC / totalOffers) : 0;
+    
+    // Sort recruiters by offers
+    const topRecruiters = Array.from(recruitersMap.entries())
+      .sort((a, b) => b[1].offers - a[1].offers)
+      .slice(0, 5)
+      .map(([name, _]) => name);
+
     res.json({
-      placementPercentage: 88,
-      averageCTC: 850000,
-      highestCTC: 4500000,
-      topRecruiters: ['Google', 'Microsoft', 'Amazon', 'TCS'],
-      totalOffers: 1050
+      placementPercentage: 88, // would need total graduating students to calculate exactly
+      averageCTC: averageCTC * 100000,
+      highestCTC: highestCTC * 100000,
+      topRecruiters,
+      totalOffers
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });

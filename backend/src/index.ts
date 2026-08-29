@@ -46,6 +46,7 @@ import feeRoutes from './routes/feeRoutes';
 import libraryRoutes from './routes/libraryRoutes';
 import noticeRoutes from './routes/noticeRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 app.use('/auth', authRoutes);
 app.use('/students', studentRoutes);
@@ -59,6 +60,7 @@ app.use('/fees', feeRoutes);
 app.use('/library', libraryRoutes);
 app.use('/notices', noticeRoutes);
 app.use('/analytics', analyticsRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/api/health', async (req: Request, res: Response) => {
   try {

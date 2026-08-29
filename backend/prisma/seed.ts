@@ -73,6 +73,79 @@ async function main() {
     },
   });
 
+  // Seed 5 New Modules
+
+  // Permissions
+  const perm1 = await prisma.permission.upsert({
+    where: { name: 'manage_students' },
+    update: {},
+    create: { name: 'manage_students', category: 'Student', description: 'Manage students' }
+  });
+  const perm2 = await prisma.permission.upsert({
+    where: { name: 'manage_faculty' },
+    update: {},
+    create: { name: 'manage_faculty', category: 'Faculty', description: 'Manage faculty' }
+  });
+
+  // Role Permissions
+  await prisma.rolePermission.upsert({
+    where: { role_permissionId: { role: 'ADMIN', permissionId: perm1.id } },
+    update: {},
+    create: { role: 'ADMIN', permissionId: perm1.id }
+  });
+
+  // Admissions
+  await prisma.admissionApplication.upsert({
+    where: { applicationId: 'APP2024001' },
+    update: {},
+    create: {
+      applicantName: 'Aryan Sharma',
+      applicationId: 'APP2024001',
+      program: 'B.Tech',
+      department: 'Computer Science',
+      jeeRank: 1250,
+      category: 'General',
+      quota: 'JEE',
+      status: 'approved'
+    }
+  });
+
+  // Leaves
+  if (facultyUser.facultyProfile) {
+    await prisma.leaveRequest.create({
+      data: {
+        facultyId: facultyUser.facultyProfile.id,
+        type: 'Casual Leave',
+        fromDate: new Date('2024-03-15'),
+        toDate: new Date('2024-03-17'),
+        days: 3,
+        reason: 'Personal work',
+        status: 'approved'
+      }
+    });
+  }
+
+  // Document Requests & Placements
+  if (studentUser.studentProfile) {
+    await prisma.documentRequest.create({
+      data: {
+        studentId: studentUser.studentProfile.id,
+        documentName: 'Bonafide Certificate',
+        status: 'completed'
+      }
+    });
+
+    await prisma.placementRecord.create({
+      data: {
+        studentId: studentUser.studentProfile.id,
+        companyName: 'Google',
+        companyType: 'Product',
+        ctc: 18.5,
+        offerDate: new Date()
+      }
+    });
+  }
+
   console.log('Seeding completed successfully!');
 }
 

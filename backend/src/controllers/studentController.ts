@@ -242,6 +242,17 @@ export const getStudentGrades = async (req: Request, res: Response) => {
   }
 };
 
+export const getStudentDocuments = async (req: Request, res: Response) => {
+  try {
+    const docs = await prisma.documentRequest.findMany({
+      where: { studentId: req.params.id }
+    });
+    res.json(docs);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 export const getStudentFees = async (req: Request, res: Response) => {
   try {
     const transactions = await prisma.feeTransaction.findMany({
