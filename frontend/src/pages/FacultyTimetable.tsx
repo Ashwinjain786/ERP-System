@@ -4,6 +4,7 @@ import { Calendar, Clock, BookOpen, MapPin, ChevronLeft, ChevronRight } from 'lu
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const container = {
   hidden: {},

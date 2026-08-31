@@ -49,7 +49,7 @@ export default function AdminExaminations() {
   const [activeTab, setActiveTab] = useState<'schedule' | 'invigilation' | 'results'>('schedule');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: examinations, error } = useExaminations();
+  const { data: examinations, isLoading, error } = useExaminations();
 
   const stats = {
     totalExams: examinations?.length || 0,

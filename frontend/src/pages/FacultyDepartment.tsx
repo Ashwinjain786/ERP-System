@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Users, BookOpen, Plus, Search, Mail, Phone, MoreVertical } from 'lucide-react';
+import { Users, BookOpen, Plus, Search, MoreVertical, Clock } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -203,7 +203,7 @@ export default function FacultyDepartment() {
                                   <p className="text-xs text-muted-foreground">{course.code}</p>
                                 </div>
                               </div>
-                              <span className="text-sm text-muted-foreground">{course.students} students</span>
+                              <span className="text-sm text-muted-foreground">{course.students || 0} students</span>
                             </div>
                           ))}
                         </div>
@@ -237,37 +237,37 @@ export default function FacultyDepartment() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {filteredFaculty.map((faculty) => (
+                {filteredFaculty.map((f) => (
                   <div
-                    key={faculty.id}
+                    key={f.id}
                     className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border-2 border-transparent hover:border-primary/20"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <span className="text-sm font-semibold text-primary">
-                          {faculty.name?.split(' ').map((n: string) => n[0]).join('')}
+                          {f.name?.split(' ').map((n: string) => n[0]).join('')}
                         </span>
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground">{faculty.name}</p>
-                        <p className="text-sm text-muted-foreground">{faculty.designation} • {faculty.qualification}</p>
+                        <p className="font-semibold text-foreground">{f.name}</p>
+                        <p className="text-sm text-muted-foreground">{f.designation} • {f.qualification}</p>
                         <div className="flex items-center gap-4 mt-1">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Mail className="w-3 h-3" /> {faculty.email}
-                          </span>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Phone className="w-3 h-3" /> {faculty.phone}
-                          </span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-xs font-medium text-muted-foreground">
+                              <BookOpen className="w-3.5 h-3.5" /> {f.courses || 0} Courses
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-xs font-medium text-muted-foreground">
+                              <Clock className="w-3.5 h-3.5" /> {f.workload || 0} hrs/week
+                            </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-center">
-                        <p className="font-display text-lg font-bold text-foreground">{faculty.courses}</p>
+                        <p className="font-display text-lg font-bold text-foreground">{f.courses || 0}</p>
                         <p className="text-xs text-muted-foreground">Courses</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-display text-lg font-bold text-foreground">{faculty.workload}h</p>
+                        <p className="font-display text-lg font-bold text-foreground">{f.workload || 0}h</p>
                         <p className="text-xs text-muted-foreground">Workload</p>
                       </div>
                       <Button variant="ghost" size="icon">
@@ -318,8 +318,8 @@ export default function FacultyDepartment() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-medium text-foreground">{course.students} students</p>
-                              <p className="text-xs text-muted-foreground">{course.faculty}</p>
+                              <p className="text-sm font-medium text-foreground">{course.students || 0} students</p>
+                              <p className="text-xs text-muted-foreground">{course.faculty || 'Unassigned'}</p>
                             </div>
                           </div>
                         ))}

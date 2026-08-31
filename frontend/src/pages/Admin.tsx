@@ -84,7 +84,7 @@ export default function Admin() {
   const { data: metrics } = useInstitutionalMetrics();
   const { data: students } = useStudentsList();
   const { data: defaulters } = useFeeDefaulters();
-  useNotices();
+  const { data: notices } = useNotices();
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,7 +258,7 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {notices?.filter(n => n.isUrgent).slice(0, 3).map((notice) => (
+                  {notices?.filter((n) => n.isUrgent).slice(0, 3).map((notice) => (
                     <Link 
                       key={notice.id} 
                       to="/admin/notices"
@@ -273,7 +273,7 @@ export default function Admin() {
                       </p>
                     </Link>
                   ))}
-                  {(!notices || notices.filter(n => n.isUrgent).length === 0) && (
+                  {(!notices || notices.filter((n) => n.isUrgent).length === 0) && (
                     <p className="text-center text-muted-foreground py-4">No urgent notices</p>
                   )}
                 </div>

@@ -153,7 +153,7 @@ async function request<T>(options: {
   operationId: string;
   method: string;
   path: string;
-  input?: Record<string, unknown>;
+  input?: any;
   pathParams: string[];
   queryParams: string[];
   headerParams: string[];
@@ -538,7 +538,7 @@ export const createDepartment = async (input: CreateDepartmentInput): Promise<Cr
   });
 };
 
-export const updateDepartment = async (id: string, input: DepartmentInput): Promise<Department> => request<Department>({ operationId: 'updateDepartment', method: 'PUT', path: `/departments/${id}`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const updateDepartment = async (id: string, input: any): Promise<Department> => request<Department>({ operationId: 'updateDepartment', method: 'PUT', path: `/departments/${id}`, input, pathParams: [], queryParams: [], headerParams: [] });
 export const deleteDepartment = async (id: string): Promise<void> => request<void>({ operationId: 'deleteDepartment', method: 'DELETE', path: `/departments/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
 
 export const getTimetables = async (input: GetTimetablesInput): Promise<GetTimetablesOutput> => {

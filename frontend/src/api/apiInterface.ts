@@ -133,6 +133,8 @@ export interface Faculty {
   weeklyWorkloadHours?: number;
   leaveBalance?: number;
   avatarUrl?: string;
+  courses?: number;
+  workload?: number;
 }
 
 export interface FacultyInput {
@@ -164,6 +166,8 @@ export interface Course {
   type?: 'theory' | 'lab' | 'elective' | 'project';
   description?: string;
   facultyInstructor?: string;
+  students?: number;
+  faculty?: string;
 }
 
 export interface CourseInput {
@@ -199,6 +203,9 @@ export interface TimetableEntry {
   subjectName?: string;
   facultyName: string;
   roomNumber: string;
+  subject?: string;
+  faculty?: string;
+  room?: string;
 }
 
 export interface TimetableGrid {

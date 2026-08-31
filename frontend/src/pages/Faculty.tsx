@@ -2,7 +2,8 @@ import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
-  Users, ClipboardList, ArrowRight, BookOpen, TrendingUp, CalendarDays
+  Users, ClipboardList, ArrowRight, BookOpen, TrendingUp,
+  Clock, Calendar, Bookmark
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -131,7 +132,7 @@ export default function Faculty() {
                   label="Leave Balance" 
                   value={profile?.leaveBalance || 0}
                   subtext="Days available"
-                  icon={BookMarked}
+                  icon={Bookmark}
                   color="bg-amber-500"
                 />
               </div>
@@ -228,8 +229,8 @@ export default function Faculty() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <QuickAction href="/faculty/attendance" icon={ClipboardList} label="Mark Attendance" description="Record student attendance" color="bg-emerald-500" />
             <QuickAction href="/faculty/classes" icon={Users} label="My Classes" description="View assigned batches" color="bg-blue-500" />
-            <QuickAction href="/faculty/grading" icon={BookMarked} label="Grade Entry" description="Submit student grades" color="bg-violet-500" />
-            <QuickAction href="/faculty/leaves" icon={CalendarDays} label="Leave Request" description="Apply for leave" color="bg-amber-500" />
+            <QuickAction href="/faculty/grading" icon={Bookmark} label="Grade Entry" description="Submit student grades" color="bg-violet-500" />
+            <QuickAction href="/faculty/leaves" icon={Bookmark} label="Leave Requests" description="Apply for leave" color="bg-amber-500" />
           </div>
         </div>
       </div>

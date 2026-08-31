@@ -20,6 +20,16 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
+function TableSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="h-14 bg-muted rounded-lg animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
 export default function AdminFaculty() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;

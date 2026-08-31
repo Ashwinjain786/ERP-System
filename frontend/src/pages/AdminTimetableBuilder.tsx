@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   Calendar, Plus, Save, Download, RotateCcw,
-  Clock, MapPin, CheckCircle, AlertCircle
+  Clock, MapPin, CheckCircle, AlertCircle, Filter
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
