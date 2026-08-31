@@ -14,5 +14,8 @@
   },
   "dependencies": {
     "vercel": "^59.3.0"
+  },
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node@latest"
   }
 }
