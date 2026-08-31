@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const requiredEnvVars = ['PORT', 'DATABASE_URL', 'JWT_SECRET'];
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
 
 export const validateEnv = () => {
   for (const envVar of requiredEnvVars) {
