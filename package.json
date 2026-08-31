@@ -11,5 +11,8 @@
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "install:all": "npm install"
+  },
+  "dependencies": {
+    "vercel": "^59.3.0"
   }
 }
