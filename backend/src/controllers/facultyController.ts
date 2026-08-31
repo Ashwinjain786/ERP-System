@@ -190,3 +190,17 @@ export const getLeaveRequests = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const deleteFaculty = async (req: Request, res: Response) => {
+  try {
+    const faculty = await prisma.faculty.findUnique({ where: { id: req.params.id } });
+    if (!faculty) return res.status(404).json({ success: false, message: 'Faculty not found' });
+
+    // Deleting the user will cascade and delete the faculty profile
+    await prisma.user.delete({ where: { id: faculty.userId } });
+
+    res.json({ success: true, message: 'Faculty deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete faculty' });
+  }
+};

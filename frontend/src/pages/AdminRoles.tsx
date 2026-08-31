@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
-  Shield, Plus, Search, Users, Key, Edit,
-  CheckCircle, XCircle
+  Shield, Search, Users, Key, Save,
+  CheckCircle, XCircle, Loader2
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,7 @@ const item = {
 
 import { useQuery } from '@tanstack/react-query';
 import { apiConfig } from '@/api/apiCall';
+import { useRoleMutations } from '@/features/admin/hooks';
 
 function useRoles() {
   return useQuery({
@@ -83,6 +84,8 @@ export default function AdminRoles() {
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Set<string>>(new Set());
 
+  const roleMutations = useRoleMutations();
+
   const { data: rolesData } = useRoles();
   const roles = (Array.isArray(rolesData) ? rolesData : []) as AdminRole[];
   const selectedRole = roles.find(role => role.id === selectedRoleId) ?? roles[0] ?? null;
@@ -107,6 +110,20 @@ export default function AdminRoles() {
     setRolePermissions(new Set(role.permissions || []));
   };
 
+  const handleSavePermissions = async () => {
+    if (!selectedRole) return;
+    try {
+      await roleMutations.updatePermissions.mutateAsync({
+        role: selectedRole.id,
+        permissions: Array.from(rolePermissions)
+      });
+      // Optionally show a success toast here
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save permissions');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b-2 border-border/60 bg-gradient-to-r from-indigo-500/5 via-background to-background">
@@ -123,9 +140,6 @@ export default function AdminRoles() {
                     <p className="text-sm text-muted-foreground">Manage roles and permissions</p>
                   </div>
                 </div>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" /> Create Role
-                </Button>
               </div>
             </Wrapper>
 
@@ -238,8 +252,13 @@ export default function AdminRoles() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
-                        <Edit className="w-4 h-4 mr-1" /> Edit
+                      <Button variant="default" size="sm" onClick={handleSavePermissions} disabled={roleMutations.updatePermissions.isPending}>
+                        {roleMutations.updatePermissions.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Permissions
                       </Button>
                       <Button variant="outline" size="sm">
                         <Users className="w-4 h-4 mr-1" /> {selectedRole.users} Users

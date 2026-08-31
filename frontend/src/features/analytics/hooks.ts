@@ -4,6 +4,8 @@ import {
   getAdmissionsAnalytics,
   getAcademicPerformanceAnalytics,
   getPlacementAnalytics,
+  getSystemActivity,
+  getFinancialHealthAnalytics,
 } from '@/api/apiCall';
 
 export function useInstitutionalOverview() {
@@ -38,6 +40,25 @@ export function usePlacementAnalytics() {
     queryKey: ['analytics', 'placement'],
     queryFn: async () => {
       return await getPlacementAnalytics();
+    },
+  });
+}
+
+export function useSystemActivity() {
+  return useQuery({
+    queryKey: ['analytics', 'activity'],
+    queryFn: async () => {
+      return await getSystemActivity();
+    },
+    refetchInterval: 30000
+  });
+}
+
+export function useFinancialHealthAnalytics() {
+  return useQuery({
+    queryKey: ['analytics', 'financialHealth'],
+    queryFn: async () => {
+      return await getFinancialHealthAnalytics();
     },
   });
 }

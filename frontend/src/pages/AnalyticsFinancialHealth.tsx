@@ -14,6 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useFeeTransactions } from '@/features/finance/hooks';
+import { useFinancialHealthAnalytics } from '@/features/analytics/hooks';
+import { useInstitutionalMetrics } from '@/features/admin/hooks';
 
 const COLORS = ['hsl(26.1 100% 34.7%)', 'hsl(41.5 100% 33.1%)', 'hsl(181.3 100% 28%)', 'hsl(229.3 44.5% 55.5%)', 'hsl(326.6 37% 46.7%)'];
 
@@ -62,6 +64,8 @@ export default function AnalyticsFinancialHealth() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: transactions = [] } = useFeeTransactions();
+  const { data: healthData } = useFinancialHealthAnalytics();
+  const { data: metrics } = useInstitutionalMetrics();
 
   const liveRevenueData = React.useMemo(() => {
     const byMonth = new Map<string, { month: string; revenue: number; expenses: number; sortKey: number }>();
@@ -77,7 +81,12 @@ export default function AnalyticsFinancialHealth() {
   }, [transactions]);
   const revenueData = liveRevenueData;
   const totalRevenue = revenueData.reduce((sum, d) => sum + d.revenue, 0);
-  const totalExpenses = 0;
+  
+  const budgetUtilization = healthData?.budgetUtilization || [];
+  const expenseBreakdown = healthData?.expenseBreakdown || [];
+  const totalGrants = metrics?.totalResearchGrants || 0;
+
+  const totalExpenses = expenseBreakdown.reduce((sum, e) => sum + e.value, 0) / 10000000;
   const netSurplus = totalRevenue - totalExpenses;
   const surplusPercentage = totalRevenue > 0 ? ((netSurplus / totalRevenue) * 100).toFixed(1) : '0.0';
   const totalBilled = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
@@ -85,8 +94,7 @@ export default function AnalyticsFinancialHealth() {
   const feeCollectionRate = totalBilled > 0 ? Math.round((successfulAmount / totalBilled) * 100) : 0;
   const outstandingFees = transactions.filter((transaction) => transaction.status !== 'success').reduce((sum, transaction) => sum + transaction.amount, 0) / 10000000;
   const fiscalLabel = `Recorded transactions (${transactions.length})`;
-  const budgetUtilization: { department: string; allocated: number; utilized: number }[] = [];
-  const expenseBreakdown: { name: string; value: number }[] = [];
+  
   const revenueBreakdown: { name: string; value: number }[] = totalRevenue > 0 ? Array.from(new Set(transactions.map((transaction) => transaction.paymentMethod).filter(Boolean))).map((method) => ({ name: method!, value: Math.round(transactions.filter((transaction) => transaction.status === 'success' && transaction.paymentMethod === method).reduce((sum, transaction) => sum + transaction.amount, 0) / (totalRevenue * 10000000) * 100) })) : [];
   const cashFlowData: { month: string; inflow: number; outflow: number }[] = [];
 
@@ -125,14 +133,14 @@ export default function AnalyticsFinancialHealth() {
                 <StatCard 
                   label="Total Expenses" 
                   value={`₹${totalExpenses.toFixed(1)}Cr`}
-                  subtext="Expense ledger not connected"
+                  subtext={totalExpenses > 0 ? "Tracked via expense ledger" : "Expense ledger not connected"}
                   icon={TrendingDown}
                   color="bg-info"
                 />
                 <StatCard 
-                  label="Net Position (before expenses)"
+                  label="Net Position"
                   value={`₹${netSurplus.toFixed(1)}Cr`}
-                  subtext={totalExpenses > 0 ? `${surplusPercentage}% margin` : 'Expenses not connected'}
+                  subtext={`${surplusPercentage}% margin`}
                   icon={PiggyBank}
                   color="bg-primary"
                 />
@@ -361,8 +369,8 @@ export default function AnalyticsFinancialHealth() {
               <Card className="border-2 border-border/60 bg-gradient-to-br from-primary/20 to-background">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium text-muted-foreground">Research Grant</p>
-                  <p className="mt-2 font-display text-2xl font-bold">N/A</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Research grant ledger not connected</p>
+                  <p className="mt-2 font-display text-2xl font-bold">₹{(totalGrants / 10000000).toFixed(1)}Cr</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Total research grants awarded</p>
                 </CardContent>
               </Card>
             </div>

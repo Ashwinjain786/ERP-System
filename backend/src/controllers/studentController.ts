@@ -308,3 +308,17 @@ export const getStudentFees = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const deleteStudent = async (req: Request, res: Response) => {
+  try {
+    const student = await prisma.student.findUnique({ where: { id: req.params.id } });
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    // Deleting the user will cascade and delete the student profile
+    await prisma.user.delete({ where: { id: student.userId } });
+
+    res.json({ success: true, message: 'Student deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete student' });
+  }
+};

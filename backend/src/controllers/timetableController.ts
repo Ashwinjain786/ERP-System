@@ -111,3 +111,63 @@ export const generateTimetable = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const saveTimetable = async (req: Request, res: Response) => {
+  try {
+    const { department, semester, section, entries } = req.body;
+    
+    let departmentId: string | undefined;
+    if (department) {
+      const dept = await prisma.department.findFirst({
+        where: {
+          OR: [
+            { id: department },
+            { name: { equals: department, mode: 'insensitive' } },
+            { code: { equals: department, mode: 'insensitive' } },
+          ]
+        }
+      });
+      departmentId = dept?.id;
+    }
+    if (!departmentId) {
+      return res.status(400).json({ success: false, message: 'Department not found' });
+    }
+    
+    // First, delete existing entries for this section/semester/department
+    const deleteWhere: any = {};
+    if (semester) deleteWhere.semester = parseInt(semester);
+    if (section) deleteWhere.section = section;
+    if (departmentId) deleteWhere.departmentId = departmentId;
+    
+    if (Object.keys(deleteWhere).length > 0) {
+      await prisma.timetableEntry.deleteMany({
+        where: deleteWhere
+      });
+    }
+
+    // Now insert new entries
+    // Note: Assuming `entries` is an array of objects matching the necessary structure
+    if (entries && Array.isArray(entries)) {
+      const dataToInsert = entries.map((e: any) => ({
+        courseId: e.courseId, // ensure frontend sends courseId
+        facultyId: e.facultyId, // ensure frontend sends facultyId
+        departmentId: departmentId,
+        semester: semester ? parseInt(semester) : 1,
+        section: section || 'A',
+        dayOfWeek: e.dayOfWeek,
+        period: e.period,
+        timeSlot: e.timeSlot,
+        roomNumber: e.roomNumber
+      }));
+      
+      await prisma.timetableEntry.createMany({
+        data: dataToInsert
+      });
+    }
+
+    res.json({ success: true, message: 'Timetable saved successfully' });
+  } catch (error) {
+    console.error('Failed to save timetable', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

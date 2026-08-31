@@ -154,10 +154,10 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations (back-references)
-  studentProfile Student?
-  facultyProfile Faculty?
-  fineRecords    FineRecord[]
-  borrowedBooks  CirculationRecord[]
+  studentProfile   Student?
+  facultyProfile   Faculty?
+  fineRecords      FineRecord[]
+  borrowedBooks    CirculationRecord[]
   publishedNotices Notice[]
 
   @@index([role])
@@ -170,19 +170,20 @@ model User {
 model Department {
   id                 String   @id @default(uuid())
   code               String   @unique
-  name               String   @unique   // Two departments cannot share a name
-  headOfDepartmentId String?  @unique   // FK → Faculty.id (named relation below)
+  name               String   @unique // Two departments cannot share a name
+  headOfDepartmentId String?  @unique // FK → Faculty.id (named relation below)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
   // Proper FK relation to Faculty (named to disambiguate from Faculty.department)
-  headOfDepartment Faculty?  @relation("DepartmentHOD", fields: [headOfDepartmentId], references: [id], onDelete: SetNull)
+  headOfDepartment Faculty? @relation("DepartmentHOD", fields: [headOfDepartmentId], references: [id], onDelete: SetNull)
 
   // Back-references
-  students   Student[]
-  faculty    Faculty[]       @relation("DepartmentFaculty")
-  courses    Course[]
-  timetables TimetableEntry[]
+  students       Student[]
+  faculty        Faculty[]        @relation("DepartmentFaculty")
+  courses        Course[]
+  timetables     TimetableEntry[]
+  expenseRecords ExpenseRecord[]
 }
 
 // ─── Student ─────────────────────────────────────────────────────────────────
@@ -219,7 +220,7 @@ model Student {
   @@index([feeStatus])
   @@index([semester])
   @@index([batch])
-  @@index([departmentId, semester, section])  // composite for workload/timetable queries
+  @@index([departmentId, semester, section]) // composite for workload/timetable queries
 }
 
 // ─── Faculty ─────────────────────────────────────────────────────────────────
@@ -261,9 +262,9 @@ model Course {
   departmentId String
   semester     Int
   credits      Int
-  type         CourseType @default(theory)  // was String? — now a proper enum
+  type         CourseType @default(theory) // was String? — now a proper enum
   description  String?
-  facultyId    String?    @map("faculty_instructor")  // renamed field, same DB column
+  facultyId    String?    @map("faculty_instructor") // renamed field, same DB column
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -277,7 +278,7 @@ model Course {
   timetables        TimetableEntry[]
 
   @@index([departmentId])
-  @@index([departmentId, semester])  // most common query pattern
+  @@index([departmentId, semester]) // most common query pattern
   @@index([semester])
 }
 
@@ -314,7 +315,7 @@ model AttendanceRecord {
 
 model TimetableEntry {
   id           String    @id @default(uuid())
-  dayOfWeek    DayOfWeek             // was String — now a proper enum
+  dayOfWeek    DayOfWeek // was String — now a proper enum
   period       Int
   timeSlot     String
   courseId     String
@@ -322,7 +323,7 @@ model TimetableEntry {
   roomNumber   String
   section      String
   semester     Int
-  departmentId String               // denormalized from Course.departmentId for constraint
+  departmentId String // denormalized from Course.departmentId for constraint
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -332,10 +333,9 @@ model TimetableEntry {
   department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
 
   // Scheduling conflict guards
-  @@unique([dayOfWeek, period, facultyId])                      // No faculty double-booking
-  @@unique([dayOfWeek, period, roomNumber])                     // No room double-booking
+  @@unique([dayOfWeek, period, facultyId]) // No faculty double-booking
+  @@unique([dayOfWeek, period, roomNumber]) // No room double-booking
   @@unique([dayOfWeek, period, section, semester, departmentId]) // No section double-booking within dept
-
   @@index([facultyId])
   @@index([courseId])
   @@index([departmentId, section, semester])
@@ -356,7 +356,7 @@ model Examination {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  examResults ExamResult[]  // back-reference — was missing entirely
+  examResults ExamResult[] // back-reference — was missing entirely
 
   @@index([semester])
   @@index([status])
@@ -367,10 +367,10 @@ model Examination {
 // Composite unique prevents duplicate results per student/course/exam.
 
 model ExamResult {
-  id            String  @id @default(uuid())
+  id            String   @id @default(uuid())
   studentId     String
   courseId      String
-  examinationId String?                  // nullable — links result to the specific exam
+  examinationId String? // nullable — links result to the specific exam
   internalScore Float?
   endSemScore   Float?
   totalScore    Float
@@ -405,7 +405,7 @@ model FeeStructure {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([program, quota])  // One structure per program per quota
+  @@unique([program, quota]) // One structure per program per quota
   @@index([program])
 }
 
@@ -432,15 +432,15 @@ model FeeTransaction {
 // ─── Book ────────────────────────────────────────────────────────────────────
 
 model Book {
-  id              String  @id @default(uuid())
-  isbn            String  @unique
+  id              String   @id @default(uuid())
+  isbn            String   @unique
   title           String
   author          String
   publisher       String?
   category        String?
   rackLocation    String?
-  totalCopies     Int     @default(1)
-  availableCopies Int     @default(1)
+  totalCopies     Int      @default(1)
+  availableCopies Int      @default(1)
   coverImageUrl   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -467,14 +467,14 @@ model CirculationRecord {
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
 
-  book     Book        @relation(fields: [bookId], references: [id], onDelete: Restrict)   // Block book deletion with any borrow history
-  borrower User        @relation(fields: [borrowerId], references: [id], onDelete: Restrict) // Block user deletion with borrow history
-  fines    FineRecord[]                                                                      // back-reference — was missing
+  book     Book         @relation(fields: [bookId], references: [id], onDelete: Restrict) // Block book deletion with any borrow history
+  borrower User         @relation(fields: [borrowerId], references: [id], onDelete: Restrict) // Block user deletion with borrow history
+  fines    FineRecord[] // back-reference — was missing
 
   @@index([borrowerId])
   @@index([bookId])
   @@index([status])
-  @@index([dueDate])        // for overdue detection
+  @@index([dueDate]) // for overdue detection
   @@index([borrowerId, status])
 }
 
@@ -484,7 +484,7 @@ model CirculationRecord {
 model FineRecord {
   id            String     @id @default(uuid())
   userId        String
-  circulationId String?    // FK → CirculationRecord.id (nullable for manual fines)
+  circulationId String? // FK → CirculationRecord.id (nullable for manual fines)
   amount        Float
   reason        String?
   status        FineStatus @default(unpaid)
@@ -503,17 +503,17 @@ model FineRecord {
 // ─── Notice ──────────────────────────────────────────────────────────────────
 
 model Notice {
-  id          String         @id @default(uuid())
+  id          String           @id @default(uuid())
   title       String
-  content     String         @db.Text
-  category    NoticeCategory @default(general)
+  content     String           @db.Text
+  category    NoticeCategory   @default(general)
   targetRole  NoticeTargetRole @default(all)
   department  String?
   publishedBy String?
-  publishedAt DateTime       @default(now())
-  isUrgent    Boolean        @default(false)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  publishedAt DateTime         @default(now())
+  isUrgent    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   publisher User? @relation(fields: [publishedBy], references: [id], onDelete: SetNull)
 
@@ -535,7 +535,7 @@ model LeaveRequest {
   toDate    DateTime
   days      Int
   reason    String
-  status    LeaveStatus @default(pending)   // was String — now proper enum
+  status    LeaveStatus @default(pending) // was String — now proper enum
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
@@ -553,7 +553,7 @@ model DocumentRequest {
   id           String         @id @default(uuid())
   studentId    String
   documentName String
-  status       DocumentStatus @default(pending)   // was String — now proper enum
+  status       DocumentStatus @default(pending) // was String — now proper enum
   requestedAt  DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -576,7 +576,7 @@ model AdmissionApplication {
   gateRank      Int?
   category      String
   quota         String
-  status        ApplicationStatus @default(pending)   // was String — now proper enum
+  status        ApplicationStatus @default(pending) // was String — now proper enum
   appliedDate   DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
@@ -624,4 +624,42 @@ model RolePermission {
 
   @@unique([role, permissionId])
   @@index([role])
+}
+
+// ─── Phase 4 Analytics Supplements ──────────────────────────────────────────
+
+model SystemActivity {
+  id          String   @id @default(uuid())
+  action      String
+  description String
+  type        String   @default("info") // 'success', 'warning', 'info', 'destructive'
+  timestamp   DateTime @default(now())
+
+  @@index([timestamp])
+}
+
+model ExpenseRecord {
+  id           String   @id @default(uuid())
+  departmentId String?
+  category     String
+  amount       Float
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@index([category])
+}
+
+model ResearchGrant {
+  id          String   @id @default(uuid())
+  title       String
+  agency      String
+  amount      Float
+  status      String   @default("active")
+  awardedDate DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([awardedDate])
 }

@@ -17,16 +17,61 @@ export const getExaminations = async (req: Request, res: Response) => {
 
 export const createExamination = async (req: Request, res: Response) => {
   try {
-    const { title, semester, startDate, endDate } = req.body;
+    const { title, semester, startDate, endDate, academicYear } = req.body;
     const exam = await prisma.examination.create({
       data: {
         title,
         semester: parseInt(semester as string),
         startDate: new Date(startDate),
-        endDate: new Date(endDate)
+        endDate: new Date(endDate),
+        academicYear
       }
     });
     res.json(exam);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const updateExamination = async (req: Request, res: Response) => {
+  try {
+    const { title, semester, startDate, endDate, academicYear, status } = req.body;
+    const data: any = {};
+    if (title) data.title = title;
+    if (semester) data.semester = parseInt(semester as string);
+    if (startDate) data.startDate = new Date(startDate);
+    if (endDate) data.endDate = new Date(endDate);
+    if (academicYear) data.academicYear = academicYear;
+    if (status) data.status = status;
+
+    const exam = await prisma.examination.update({
+      where: { id: req.params.id },
+      data
+    });
+    res.json(exam);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const deleteExamination = async (req: Request, res: Response) => {
+  try {
+    await prisma.examination.delete({
+      where: { id: req.params.id }
+    });
+    res.json({ success: true, message: 'Examination deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const releaseHallTickets = async (req: Request, res: Response) => {
+  try {
+    const exam = await prisma.examination.update({
+      where: { id: req.params.id },
+      data: { hallTicketReleased: true }
+    });
+    res.json({ success: true, message: 'Hall tickets released', data: exam });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }

@@ -53,3 +53,34 @@ export const createNotice = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const updateNotice = async (req: Request, res: Response) => {
+  try {
+    const { title, content, category, targetRole, department, isUrgent } = req.body;
+    const notice = await prisma.notice.update({
+      where: { id: req.params.id },
+      data: {
+        title,
+        content,
+        category,
+        targetRole: targetRole as NoticeTargetRole | undefined,
+        department,
+        isUrgent
+      }
+    });
+    res.json(notice);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const deleteNotice = async (req: Request, res: Response) => {
+  try {
+    await prisma.notice.delete({
+      where: { id: req.params.id }
+    });
+    res.json({ success: true, message: 'Notice deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete notice' });
+  }
+};

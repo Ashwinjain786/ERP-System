@@ -1,3 +1,4 @@
+import { SystemActivity } from '@/api/apiInterface';
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
@@ -10,7 +11,9 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useInstitutionalMetrics, useStudentsList, useFeeDefaulters, useNotices } from '@/features/admin/hooks';
+import { useSystemActivity } from '@/features/analytics/hooks';
 import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 const container = {
   hidden: {},
@@ -85,6 +88,7 @@ export default function Admin() {
   const { data: students } = useStudentsList();
   const { data: defaulters } = useFeeDefaulters();
   const { data: notices } = useNotices();
+  const { data: systemActivity } = useSystemActivity();
 
   return (
     <div className="min-h-screen bg-background">
@@ -160,36 +164,30 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30">
-                    <div className="p-2 rounded-lg bg-success/10">
-                      <GraduationCap className="w-5 h-5 text-success" />
+                  {systemActivity?.map((activity: SystemActivity) => (
+                    <div key={activity.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/30">
+                      <div className={cn("p-2 rounded-lg", 
+                        activity.type === 'success' ? 'bg-success/10' :
+                        activity.type === 'warning' ? 'bg-warning/10' :
+                        activity.type === 'destructive' ? 'bg-destructive/10' : 'bg-info/10'
+                      )}>
+                        {activity.type === 'success' ? <GraduationCap className="w-5 h-5 text-success" /> :
+                         activity.type === 'warning' ? <AlertTriangle className="w-5 h-5 text-warning" /> :
+                         <FileText className={cn("w-5 h-5", activity.type === 'destructive' ? 'text-destructive' : 'text-info')} />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground">{activity.action}</p>
+                        <p className="text-sm text-muted-foreground">{activity.description}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground">15 new students enrolled</p>
-                      <p className="text-sm text-muted-foreground">B.Tech 2024 batch admissions completed</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">2h ago</span>
-                  </div>
-                  <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30">
-                    <div className="p-2 rounded-lg bg-warning/10">
-                      <FileText className="w-5 h-5 text-warning" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground">Examination schedule published</p>
-                      <p className="text-sm text-muted-foreground">Mid-semester dates announced</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">5h ago</span>
-                  </div>
-                  <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30">
-                    <div className="p-2 rounded-lg bg-info/10">
-                      <DollarSign className="w-5 h-5 text-info" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground">Fee collection update</p>
-                      <p className="text-sm text-muted-foreground">78.5% fee collection rate achieved</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">1d ago</span>
-                  </div>
+                  ))}
+                  {(!systemActivity || systemActivity.length === 0) && (
+                    <p className="text-center text-muted-foreground py-4">No recent activity</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -234,11 +232,11 @@ export default function Admin() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Departments</span>
-                  <span className="font-mono font-semibold tabular-nums">5</span>
+                  <span className="font-mono font-semibold tabular-nums">{metrics?.totalDepartments || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Active Courses</span>
-                  <span className="font-mono font-semibold tabular-nums">48</span>
+                  <span className="font-mono font-semibold tabular-nums">{metrics?.activeCourses || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Placement Rate</span>

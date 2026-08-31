@@ -1,3 +1,4 @@
+import { Notice } from '@/api/apiInterface';
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
@@ -10,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useNotices } from '@/features/admin/hooks';
+import { useNotices, useNoticeMutations } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
 import type { Notice as ApiNotice } from '@/api/apiInterface';
 
@@ -54,13 +55,69 @@ export default function AdminNotices() {
   const [newNotice, setNewNotice] = useState({
     title: '',
     content: '',
-    category: 'general',
-    targetRole: 'all',
+    category: 'general' as 'general' | 'academic' | 'examination' | 'events' | 'fee',
+    targetRole: 'all' as 'all' | 'student' | 'faculty' | 'hod',
     isUrgent: false,
   });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editNoticeId, setEditNoticeId] = useState<string | null>(null);
 
+  const noticeMutations = useNoticeMutations();
   const { data: noticesData, isLoading, error } = useNotices();
   const allNotices = (Array.isArray(noticesData) ? noticesData : []) as ApiNotice[];
+
+  const handleCreateNotice = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newNotice.title || !newNotice.content) return;
+    try {
+      await noticeMutations.create.mutateAsync(newNotice);
+      setShowCreateModal(false);
+      setNewNotice({
+        title: '', content: '', category: 'general', targetRole: 'all', isUrgent: false,
+      });
+    } catch (err) {
+      console.error('Failed to create notice:', err);
+      alert('Failed to create notice. Please try again.');
+    }
+  };
+
+  const handleEditNotice = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!editNoticeId || !newNotice.title || !newNotice.content) return;
+    try {
+      await noticeMutations.update.mutateAsync({
+        id: editNoticeId,
+        ...newNotice
+      });
+      setShowEditModal(false);
+      setEditNoticeId(null);
+    } catch (err) {
+      console.error('Failed to update notice:', err);
+      alert('Failed to update notice. Please try again.');
+    }
+  };
+
+  const handleDeleteNotice = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this notice?')) return;
+    try {
+      await noticeMutations.remove.mutateAsync(id);
+    } catch (err) {
+      console.error('Failed to delete notice:', err);
+      alert('Failed to delete notice.');
+    }
+  };
+
+  const openEditModal = (notice: ApiNotice) => {
+    setEditNoticeId(notice.id);
+    setNewNotice({
+      title: notice.title || '',
+      content: notice.content || '',
+      category: (notice.category || 'general') as any /* eslint-disable-line @typescript-eslint/no-explicit-any */,
+      targetRole: (notice.targetRole || 'all') as any /* eslint-disable-line @typescript-eslint/no-explicit-any */,
+      isUrgent: !!notice.isUrgent,
+    });
+    setShowEditModal(true);
+  };
 
   const filteredNotices = allNotices.filter((notice) => {
     const matchesSearch = notice.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -213,10 +270,10 @@ export default function AdminNotices() {
                               <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <Pin className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary" onClick={() => openEditModal(notice as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)}>
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDeleteNotice(notice.id)}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -295,7 +352,7 @@ export default function AdminNotices() {
                 <X className="w-5 h-5" />
               </Button>
             </div>
-            <div className="p-4 space-y-4">
+            <form onSubmit={handleCreateNotice} className="p-4 space-y-4">
               <div>
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -318,25 +375,26 @@ export default function AdminNotices() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Category</Label>
                   <select
-                    className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3 text-sm"
+                    id="category"
+                    className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3"
                     value={newNotice.category}
-                    onChange={(e) => setNewNotice({ ...newNotice, category: e.target.value })}
+                    onChange={(e) => setNewNotice({ ...newNotice, category: e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */ })}
                   >
+                    <option value="general">General</option>
                     <option value="academic">Academic</option>
                     <option value="examination">Examination</option>
                     <option value="events">Events</option>
-                    <option value="fee">Fee</option>
-                    <option value="general">General</option>
+                    <option value="fee">Fee & Dues</option>
                   </select>
                 </div>
                 <div>
-                  <Label>Target Role</Label>
+                  <Label htmlFor="targetRole">Target Audience</Label>
                   <select
-                    className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3 text-sm"
+                    id="targetRole"
+                    className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3"
                     value={newNotice.targetRole}
-                    onChange={(e) => setNewNotice({ ...newNotice, targetRole: e.target.value })}
+                    onChange={(e) => setNewNotice({ ...newNotice, targetRole: e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */ })}
                   >
                     <option value="all">All</option>
                     <option value="student">Students</option>
@@ -355,10 +413,95 @@ export default function AdminNotices() {
                 />
                 <Label htmlFor="urgent" className="font-normal">Mark as urgent</Label>
               </div>
-            </div>
+            </form>
             <div className="flex justify-end gap-2 p-4 border-t border-border">
-              <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
-              <Button onClick={() => setShowCreateModal(false)}>Publish Notice</Button>
+              <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+              <Button onClick={handleCreateNotice} disabled={noticeMutations.create.isPending}>
+                {noticeMutations.create.isPending ? 'Publishing...' : 'Publish Notice'}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl border-2 border-border w-full max-w-lg shadow-xl"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="font-display text-lg font-semibold">Edit Notice</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowEditModal(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <form onSubmit={handleEditNotice} className="p-4 space-y-4">
+              <div>
+                <Label htmlFor="title-edit">Title</Label>
+                <Input
+                  id="title-edit"
+                  className="mt-1.5"
+                  value={newNotice.title}
+                  onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
+                  placeholder="Notice title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="content-edit">Content</Label>
+                <textarea
+                  id="content-edit"
+                  className="mt-1.5 flex w-full rounded-lg border-2 border-input bg-background px-3 py-2 text-sm min-h-[100px]"
+                  value={newNotice.content}
+                  onChange={(e) => setNewNotice({ ...newNotice, content: e.target.value })}
+                  placeholder="Notice content..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <select
+                    className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3"
+                    value={newNotice.category}
+                    onChange={(e) => setNewNotice({ ...newNotice, category: e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */ })}
+                  >
+                    <option value="general">General</option>
+                    <option value="academic">Academic</option>
+                    <option value="examination">Examination</option>
+                    <option value="events">Events</option>
+                    <option value="fee">Fee & Dues</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Target Audience</Label>
+                  <select
+                    className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3"
+                    value={newNotice.targetRole}
+                    onChange={(e) => setNewNotice({ ...newNotice, targetRole: e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */ })}
+                  >
+                    <option value="all">All</option>
+                    <option value="student">Students</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="hod">HODs</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="urgent-edit"
+                  className="w-4 h-4 rounded border-input"
+                  checked={newNotice.isUrgent}
+                  onChange={(e) => setNewNotice({ ...newNotice, isUrgent: e.target.checked })}
+                />
+                <Label htmlFor="urgent-edit" className="font-normal">Mark as urgent</Label>
+              </div>
+            </form>
+            <div className="flex justify-end gap-2 p-4 border-t border-border">
+              <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+              <Button onClick={handleEditNotice} disabled={noticeMutations.update.isPending}>
+                {noticeMutations.update.isPending ? 'Updating...' : 'Save Changes'}
+              </Button>
             </div>
           </motion.div>
         </div>

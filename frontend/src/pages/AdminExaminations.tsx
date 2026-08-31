@@ -1,16 +1,18 @@
+import { Examination } from '@/api/apiInterface';
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   FileText, Plus, Search, Calendar, Clock, CheckCircle,
-  Download, Users, Award
+  Download, Users, Award, X, Edit, Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useExaminations } from '@/features/admin/hooks';
+import { useExaminations, useExaminationMutations } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 const container = {
   hidden: {},
@@ -48,8 +50,74 @@ export default function AdminExaminations() {
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const [activeTab, setActiveTab] = useState<'schedule' | 'invigilation' | 'results'>('schedule');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingExamId, setEditingExamId] = useState<string | null>(null);
+  const [examForm, setExamForm] = useState({
+    title: '',
+    academicYear: '2023-2024',
+    semester: 1,
+    startDate: '',
+    endDate: ''
+  });
 
   const { data: examinations, isLoading, error } = useExaminations();
+  const examinationMutations = useExaminationMutations();
+
+  const handleOpenAddModal = () => {
+    setEditingExamId(null);
+    setExamForm({ title: '', academicYear: '2023-2024', semester: 1, startDate: '', endDate: '' });
+    setShowAddModal(true);
+  };
+
+  const handleOpenEditModal = (exam: Examination) => {
+    setEditingExamId(exam.id);
+    setExamForm({
+      title: exam.title,
+      academicYear: exam.academicYear || '',
+      semester: exam.semester || 1,
+      startDate: format(new Date(exam.startDate), 'yyyy-MM-dd'),
+      endDate: format(new Date(exam.endDate), 'yyyy-MM-dd')
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDeleteExam = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this examination?')) {
+      try {
+        await examinationMutations.remove.mutateAsync(id);
+      } catch (err) {
+        console.error('Failed to delete examination:', err);
+        alert('Failed to delete examination.');
+      }
+    }
+  };
+
+  const handleReleaseHallTickets = async (id: string) => {
+    if (window.confirm('Are you sure you want to release hall tickets for this examination?')) {
+      try {
+        await examinationMutations.releaseHallTickets.mutateAsync(id);
+      } catch (err) {
+        console.error('Failed to release hall tickets:', err);
+        alert('Failed to release hall tickets.');
+      }
+    }
+  };
+
+  const handleCreateOrUpdateExam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingExamId) {
+        await examinationMutations.update.mutateAsync({ id: editingExamId, ...examForm });
+      } else {
+        await examinationMutations.create.mutateAsync(examForm);
+      }
+      setShowAddModal(false);
+      setExamForm({ title: '', academicYear: '2023-2024', semester: 1, startDate: '', endDate: '' });
+    } catch (err) {
+      console.error('Failed to save examination:', err);
+      alert('Failed to save examination. Please try again.');
+    }
+  };
 
   const stats = {
     totalExams: examinations?.length || 0,
@@ -96,7 +164,7 @@ export default function AdminExaminations() {
                   <Button variant="outline" size="sm">
                     <Download className="w-4 h-4 mr-2" /> Export
                   </Button>
-                  <Button size="sm">
+                  <Button size="sm" onClick={handleOpenAddModal}>
                     <Plus className="w-4 h-4 mr-2" /> New Exam
                   </Button>
                 </div>
@@ -221,9 +289,21 @@ export default function AdminExaminations() {
                                 <StatusIcon className="w-4 h-4" />
                                 {exam.status.charAt(0).toUpperCase() + exam.status.slice(1)}
                               </span>
-                              {exam.hallTicketReleased && (
-                                <Button variant="outline" size="sm">Hall Tickets</Button>
+                              {exam.hallTicketReleased ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-muted text-muted-foreground">
+                                  Released
+                                </span>
+                              ) : (
+                                <Button variant="outline" size="sm" onClick={() => handleReleaseHallTickets(exam.id)}>
+                                  Release Hall Tickets
+                                </Button>
                               )}
+                              <Button variant="outline" size="icon" onClick={() => handleOpenEditModal(exam)}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteExam(exam.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
                         </motion.div>
@@ -337,6 +417,86 @@ export default function AdminExaminations() {
           </Card>
         )}
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl border-2 border-border w-full max-w-md shadow-xl"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="font-display text-lg font-semibold">{editingExamId ? 'Edit Exam' : 'Create New Exam'}</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowAddModal(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <form onSubmit={handleCreateOrUpdateExam} className="p-4 space-y-4">
+              <div>
+                <Label htmlFor="title">Exam Title</Label>
+                <Input
+                  id="title"
+                  required
+                  className="mt-1.5"
+                  value={examForm.title}
+                  onChange={(e) => setExamForm({ ...examForm, title: e.target.value })}
+                  placeholder="e.g. Mid-Semester I"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Academic Year</Label>
+                  <Input
+                    required
+                    className="mt-1.5"
+                    value={examForm.academicYear}
+                    onChange={(e) => setExamForm({ ...examForm, academicYear: e.target.value })}
+                    placeholder="2023-2024"
+                  />
+                </div>
+                <div>
+                  <Label>Semester</Label>
+                  <Input
+                    required
+                    type="number"
+                    min="1" max="10"
+                    className="mt-1.5"
+                    value={examForm.semester}
+                    onChange={(e) => setExamForm({ ...examForm, semester: Number(e.target.value) })}
+                    placeholder="1"
+                  />
+                </div>
+                <div>
+                  <Label>Start Date</Label>
+                  <Input
+                    required
+                    type="date"
+                    className="mt-1.5"
+                    value={examForm.startDate}
+                    onChange={(e) => setExamForm({ ...examForm, startDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>End Date</Label>
+                  <Input
+                    required
+                    type="date"
+                    className="mt-1.5"
+                    value={examForm.endDate}
+                    onChange={(e) => setExamForm({ ...examForm, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={examinationMutations.create.isPending || examinationMutations.update.isPending}>
+                  {(examinationMutations.create.isPending || examinationMutations.update.isPending) ? 'Saving...' : 'Save Exam'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

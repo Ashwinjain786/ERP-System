@@ -1,13 +1,15 @@
+import { Course } from '@/api/apiInterface';
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
-  BookOpen, Plus, Search, MoreVertical
+  BookOpen, Plus, Search, X, Pencil, Trash2
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCourses, useDepartments, useDepartmentMutations } from '@/features/admin/hooks';
+import { useCourses, useDepartments, useDepartmentMutations, useCourseMutations } from '@/features/admin/hooks';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -38,10 +40,74 @@ export default function AdminAcademics() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDepartmentForm, setShowDepartmentForm] = useState(false);
   const [departmentForm, setDepartmentForm] = useState({ code: '', name: '' });
+  
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [showEditCourseModal, setShowEditCourseModal] = useState(false);
+  const [editCourseId, setEditCourseId] = useState<string | null>(null);
+  const [courseForm, setCourseForm] = useState({
+    code: '', name: '', department: '', semester: 1, credits: 3, type: 'theory' as 'theory' | 'lab' | 'elective' | 'project'
+  });
 
   const { data: courses } = useCourses();
   const { data: departments } = useDepartments();
   const departmentMutations = useDepartmentMutations();
+  const courseMutations = useCourseMutations();
+
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await courseMutations.create.mutateAsync(courseForm);
+      setShowCourseModal(false);
+      setCourseForm({ code: '', name: '', department: '', semester: 1, credits: 3, type: 'theory' as 'theory' | 'lab' | 'elective' | 'project' });
+    } catch (err) {
+      console.error('Failed to create course:', err);
+      alert('Failed to create course. Please try again.');
+    }
+  };
+
+  const handleEditCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editCourseId) return;
+    try {
+      await courseMutations.update.mutateAsync({
+        id: editCourseId,
+        code: courseForm.code,
+        name: courseForm.name,
+        department: courseForm.department,
+        semester: courseForm.semester,
+        credits: courseForm.credits,
+        type: courseForm.type,
+      });
+      setShowEditCourseModal(false);
+      setEditCourseId(null);
+    } catch (err) {
+      console.error('Failed to update course:', err);
+      alert('Failed to update course.');
+    }
+  };
+
+  const handleDeleteCourse = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+    try {
+      await courseMutations.remove.mutateAsync(id);
+    } catch (err) {
+      console.error('Failed to delete course:', err);
+      alert('Failed to delete course.');
+    }
+  };
+
+  const openEditCourseModal = (course: Course) => {
+    setEditCourseId(course.id);
+    setCourseForm({
+      code: course.code || '',
+      name: course.name || '',
+      department: course.department || '',
+      semester: course.semester || 1,
+      credits: course.credits || 3,
+      type: course.type || 'theory'
+    });
+    setShowEditCourseModal(true);
+  };
 
   const filteredCourses = courses?.filter(c => {
     return c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -130,6 +196,9 @@ export default function AdminAcademics() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
+                <Button size="sm" onClick={() => setShowCourseModal(true)}>
+                  <Plus className="w-4 h-4 mr-2" /> Add Course
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -181,9 +250,14 @@ export default function AdminAcademics() {
                               </span>
                             </td>
                             <td className="py-3 px-2 text-right">
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
+                              <div className="flex justify-end gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEditCourseModal(course)}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteCourse(course.id)}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </td>
                           </motion.tr>
                         ))}
@@ -195,6 +269,117 @@ export default function AdminAcademics() {
           </Card>
         )}
       </div>
+
+      {showCourseModal && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl border-2 border-border w-full max-w-lg shadow-xl"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="font-display text-lg font-semibold">Add New Course</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowCourseModal(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <form onSubmit={handleCreateCourse} className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="code">Course Code</Label>
+                  <Input required id="code" className="mt-1.5" placeholder="CS101" value={courseForm.code} onChange={e => setCourseForm({...courseForm, code: e.target.value})} />
+                </div>
+                <div>
+                  <Label htmlFor="name">Course Name</Label>
+                  <Input required id="name" className="mt-1.5" placeholder="Intro to CS" value={courseForm.name} onChange={e => setCourseForm({...courseForm, name: e.target.value})} />
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <select required className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3 text-sm" value={courseForm.department} onChange={e => setCourseForm({...courseForm, department: e.target.value})}>
+                    <option value="">Select Department</option>
+                    {departments?.map(dept => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Semester</Label>
+                  <Input required type="number" min="1" max="10" className="mt-1.5" value={courseForm.semester} onChange={e => setCourseForm({...courseForm, semester: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <Label>Credits</Label>
+                  <Input required type="number" min="1" max="10" className="mt-1.5" value={courseForm.credits} onChange={e => setCourseForm({...courseForm, credits: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <Label>Type</Label>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <select required className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3 text-sm" value={courseForm.type} onChange={e => setCourseForm({...courseForm, type: e.target.value as any})}>
+                    <option value="theory">Theory</option>
+                    <option value="lab">Lab</option>
+                    <option value="elective">Elective</option>
+                    <option value="project">Project</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setShowCourseModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={courseMutations.create.isPending}>
+                  {courseMutations.create.isPending ? 'Creating...' : 'Create Course'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {showEditCourseModal && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl border-2 border-border w-full max-w-lg shadow-xl"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="font-display text-lg font-semibold">Edit Course</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowEditCourseModal(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <form onSubmit={handleEditCourse} className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="code-edit">Course Code (Read Only)</Label>
+                  <Input disabled id="code-edit" className="mt-1.5" value={courseForm.code} />
+                </div>
+                <div>
+                  <Label htmlFor="name-edit">Course Name</Label>
+                  <Input required id="name-edit" className="mt-1.5" placeholder="Intro to CS" value={courseForm.name} onChange={e => setCourseForm({...courseForm, name: e.target.value})} />
+                </div>
+                <div>
+                  <Label>Credits</Label>
+                  <Input required type="number" min="1" max="10" className="mt-1.5" value={courseForm.credits} onChange={e => setCourseForm({...courseForm, credits: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <Label>Type</Label>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <select required className="mt-1.5 h-10 w-full rounded-lg border-2 border-input bg-background px-3 text-sm" value={courseForm.type} onChange={e => setCourseForm({...courseForm, type: e.target.value as any})}>
+                    <option value="theory">Theory</option>
+                    <option value="lab">Lab</option>
+                    <option value="elective">Elective</option>
+                    <option value="project">Project</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setShowEditCourseModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={courseMutations.update.isPending}>
+                  {courseMutations.update.isPending ? 'Updating...' : 'Save Changes'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAdmissions, getRolePermissions } from '../controllers/adminController';
+import { getAdmissions, updateAdmissionStatus, getRolePermissions, updateRolePermissions } from '../controllers/adminController';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 import { authorizeRoles } from '../middlewares/roleMiddleware';
 
@@ -7,6 +7,8 @@ const router = Router();
 router.use(authenticateJWT);
 
 router.get('/admissions', authorizeRoles('admin', 'management'), getAdmissions);
+router.put('/admissions/:id', authorizeRoles('admin', 'management'), updateAdmissionStatus);
 router.get('/roles', authorizeRoles('admin', 'management'), getRolePermissions);
+router.put('/roles/:role/permissions', authorizeRoles('admin', 'management'), updateRolePermissions);
 
 export default router;

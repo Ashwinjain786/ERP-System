@@ -3,16 +3,22 @@ import prisma from '../config/db';
 
 export const getInstitutionalOverview = async (req: Request, res: Response) => {
   try {
-    const [totalStudents, totalFaculty, feeRevResult] = await Promise.all([
+    const [totalStudents, totalFaculty, feeRevResult, totalDepartments, activeCourses, researchGrantsResult] = await Promise.all([
       prisma.student.count(),
       prisma.faculty.count(),
       prisma.feeTransaction.aggregate({
         _sum: { amount: true },
         where: { status: 'success' }
       }),
+      prisma.department.count(),
+      prisma.course.count(),
+      prisma.researchGrant.aggregate({
+        _sum: { amount: true },
+      })
     ]);
 
     const totalFeeRevenue = feeRevResult._sum.amount || 0;
+    const totalResearchGrants = researchGrantsResult._sum.amount || 0;
 
     // Compute average attendance from AttendanceRecord
     const allRecords = await prisma.attendanceRecord.findMany({ select: { status: true } });
@@ -29,6 +35,9 @@ export const getInstitutionalOverview = async (req: Request, res: Response) => {
     const placementRate = totalStudents > 0
       ? parseFloat(((placedStudentIds.length / totalStudents) * 100).toFixed(1))
       : 0;
+    
+    // Static placeholder for NIRF ranking
+    const nirfRankingScore = 84.5;
 
     res.json({
       totalStudents,
@@ -38,6 +47,10 @@ export const getInstitutionalOverview = async (req: Request, res: Response) => {
       totalFeeRevenue,
       feeCollectionRate,
       placementRate,
+      totalDepartments,
+      activeCourses,
+      totalResearchGrants,
+      nirfRankingScore
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -238,6 +251,67 @@ export const getPlacementAnalytics = async (req: Request, res: Response) => {
       companyTypeDistribution,
       placementTrend,
       totalOffers,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const getSystemActivity = async (req: Request, res: Response) => {
+  try {
+    const activity = await prisma.systemActivity.findMany({
+      take: 10,
+      orderBy: { timestamp: 'desc' }
+    });
+    res.json(activity);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const getFinancialHealthAnalytics = async (req: Request, res: Response) => {
+  try {
+    const [expenses, departments, grants] = await Promise.all([
+      prisma.expenseRecord.findMany({ include: { department: true } }),
+      prisma.department.findMany(),
+      prisma.researchGrant.findMany()
+    ]);
+
+    // Group expenses by category for Expense Breakdown
+    const expenseByCategory = new Map<string, number>();
+    let totalExpenses = 0;
+    expenses.forEach(e => {
+      expenseByCategory.set(e.category, (expenseByCategory.get(e.category) || 0) + e.amount);
+      totalExpenses += e.amount;
+    });
+    const expenseBreakdown = Array.from(expenseByCategory, ([name, value]) => ({ name, value }));
+
+    // Group expenses by department for Budget Utilization
+    const deptUtilizationMap = new Map<string, number>();
+    expenses.forEach(e => {
+      const deptName = e.department?.name || 'Central Admin';
+      deptUtilizationMap.set(deptName, (deptUtilizationMap.get(deptName) || 0) + e.amount);
+    });
+    
+    // Add departments that have 0 expenses
+    departments.forEach((d: any) => {
+      if (!deptUtilizationMap.has(d.name)) {
+        deptUtilizationMap.set(d.name, 0);
+      }
+    });
+
+    const budgetUtilization = Array.from(deptUtilizationMap, ([department, utilized]) => ({
+      department,
+      utilized: utilized / 10000000, // convert to Cr
+      allocated: (utilized > 0 ? utilized * 1.2 : 5000000) / 10000000 // Mock allocation: 20% more than utilized, or base 50L
+    })).sort((a, b) => b.utilized - a.utilized).slice(0, 5); // top 5
+
+    const totalGrants = grants.reduce((sum: number, g: any) => sum + g.amount, 0);
+
+    res.json({
+      expenseBreakdown,
+      budgetUtilization,
+      totalGrants
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });

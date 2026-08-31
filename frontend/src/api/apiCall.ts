@@ -100,7 +100,9 @@ import {
   GetAcademicPerformanceAnalyticsInput,
   GetAcademicPerformanceAnalyticsOutput,
   GetPlacementAnalyticsInput,
-  GetPlacementAnalyticsOutput
+  GetPlacementAnalyticsOutput,
+  GetSystemActivityOutput,
+  GetFinancialHealthAnalyticsOutput
 } from './apiInterface';
 
 export class ApiProtocolError extends Error {
@@ -816,3 +818,39 @@ export const getPlacementAnalytics = async (_input?: GetPlacementAnalyticsInput)
     headerParams: []
   });
 };
+
+export const getSystemActivity = async (): Promise<GetSystemActivityOutput> => {
+  return request<GetSystemActivityOutput>({
+    operationId: 'getSystemActivity',
+    method: 'GET',
+    path: '/analytics/activity',
+    input: {},
+    pathParams: [],
+    queryParams: [],
+    headerParams: []
+  });
+};
+
+export const getFinancialHealthAnalytics = async (): Promise<GetFinancialHealthAnalyticsOutput> => {
+  return request<GetFinancialHealthAnalyticsOutput>({
+    operationId: 'getFinancialHealthAnalytics',
+    method: 'GET',
+    path: '/analytics/financial-health',
+    input: {},
+    pathParams: [],
+    queryParams: [],
+    headerParams: []
+  });
+};
+
+export const deleteStudent = async (id: string): Promise<any> => request<any>({ operationId: 'deleteStudent', method: 'DELETE', path: `/students/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
+export const deleteFaculty = async (id: string): Promise<any> => request<any>({ operationId: 'deleteFaculty', method: 'DELETE', path: `/faculty/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
+export const updateNotice = async (id: string, input: any): Promise<any> => request<any>({ operationId: 'updateNotice', method: 'PUT', path: `/notices/${id}`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const deleteNotice = async (id: string): Promise<any> => request<any>({ operationId: 'deleteNotice', method: 'DELETE', path: `/notices/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
+export const updateExamination = async (id: string, input: any): Promise<any> => request<any>({ operationId: 'updateExamination', method: 'PUT', path: `/examinations/${id}`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const deleteExamination = async (id: string): Promise<any> => request<any>({ operationId: 'deleteExamination', method: 'DELETE', path: `/examinations/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
+export const releaseHallTickets = async (id: string): Promise<any> => request<any>({ operationId: 'releaseHallTickets', method: 'POST', path: `/examinations/${id}/hall-tickets`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
+export const deleteCourse = async (id: string): Promise<any> => request<any>({ operationId: 'deleteCourse', method: 'DELETE', path: `/academics/courses/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
+export const updateRolePermissions = async (role: string, input: any): Promise<any> => request<any>({ operationId: 'updateRolePermissions', method: 'PUT', path: `/admin/roles/${role}/permissions`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const updateAdmissionStatus = async (id: string, input: any): Promise<any> => request<any>({ operationId: 'updateAdmissionStatus', method: 'PATCH', path: `/admissions/${id}/status`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const saveTimetable = async (input: any): Promise<any> => request<any>({ operationId: 'saveTimetable', method: 'POST', path: `/academics/timetable/generate`, input, pathParams: [], queryParams: [], headerParams: [] });

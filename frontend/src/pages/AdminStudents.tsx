@@ -1,14 +1,16 @@
+import { Student } from '@/api/apiInterface';
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   GraduationCap, Search, Download, Plus,
-  MoreVertical, ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, X,
+  Pencil, Trash2
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useStudentsList, useDepartments } from '@/features/admin/hooks';
+import { useStudentsList, useDepartments, useStudentMutations } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -47,6 +49,22 @@ export default function AdminStudents() {
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [studentForm, setStudentForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    department: '',
+    degree: 'B.Tech',
+    semester: 1,
+    batch: '2023-2027',
+    section: 'A',
+    feeQuota: 'general' as 'management' | 'general' | 'merit' | 'nri'
+  });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editStudentId, setEditStudentId] = useState<string | null>(null);
+
+  const studentMutations = useStudentMutations();
 
   const { data: students, isLoading, error } = useStudentsList();
   const { data: departments } = useDepartments();
@@ -85,6 +103,70 @@ export default function AdminStudents() {
     );
   }
 
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await studentMutations.create.mutateAsync(studentForm);
+      setShowAddModal(false);
+      setStudentForm({
+        name: '', email: '', phone: '', department: '', degree: 'B.Tech',
+        semester: 1, batch: '2023-2027', section: 'A', feeQuota: 'general'
+      });
+    } catch (err) {
+      console.error('Failed to create student:', err);
+      alert('Failed to create student. Please check input details.');
+    }
+  };
+
+  const handleEditStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editStudentId) return;
+    try {
+      await studentMutations.update.mutateAsync({
+        id: editStudentId,
+        name: studentForm.name,
+        email: studentForm.email,
+        phone: studentForm.phone,
+        department: studentForm.department,
+        degree: studentForm.degree,
+        batch: studentForm.batch,
+        semester: studentForm.semester,
+        section: studentForm.section,
+      });
+      setShowEditModal(false);
+      setEditStudentId(null);
+    } catch (err) {
+      console.error('Failed to update student:', err);
+      alert('Failed to update student.');
+    }
+  };
+
+  const handleDeleteStudent = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this student?')) return;
+    try {
+      await studentMutations.remove.mutateAsync(id);
+    } catch (err) {
+      console.error('Failed to delete student:', err);
+      alert('Failed to delete student.');
+    }
+  };
+
+  const openEditModal = (student: Student) => {
+    setEditStudentId(student.id);
+    setStudentForm({
+      name: student.name || '',
+      email: student.email || '',
+      phone: student.phone || '',
+      department: student.department || '',
+      degree: student.degree || 'B.Tech',
+      semester: student.semester || 1,
+      batch: student.batch || '',
+      section: student.section || '',
+      feeQuota: student.feeQuota || 'general'
+    });
+    setShowEditModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b-2 border-border/60 bg-gradient-to-r from-emerald-500/5 via-background to-background">
@@ -105,7 +187,7 @@ export default function AdminStudents() {
                   <Button variant="outline" size="sm">
                     <Download className="w-4 h-4 mr-1" /> Export
                   </Button>
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => setShowAddModal(true)}>
                     <Plus className="w-4 h-4 mr-1" /> Add Student
                   </Button>
                 </div>
@@ -233,9 +315,14 @@ export default function AdminStudents() {
                             </span>
                           </td>
                           <td className="py-3 px-2 text-right">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEditModal(student)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteStudent(student.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </td>
                         </motion.tr>
                       ))}
@@ -286,6 +373,128 @@ export default function AdminStudents() {
           </CardContent>
         </Card>
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card w-full max-w-lg rounded-xl border shadow-xl p-6 relative overflow-y-auto max-h-[90vh]"
+          >
+            <button
+              onClick={() => setShowAddModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <h2 className="text-xl font-bold mb-4 font-display">Add New Student</h2>
+            <form onSubmit={handleCreateStudent} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Full Name <span className="text-destructive">*</span></label>
+                  <Input required placeholder="John Doe" value={studentForm.name} onChange={e => setStudentForm({ ...studentForm, name: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Email <span className="text-destructive">*</span></label>
+                  <Input required type="email" placeholder="john@example.com" value={studentForm.email} onChange={e => setStudentForm({ ...studentForm, email: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Phone Number</label>
+                  <Input placeholder="+1234567890" value={studentForm.phone} onChange={e => setStudentForm({ ...studentForm, phone: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Department <span className="text-destructive">*</span></label>
+                  <select required className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm" value={studentForm.department} onChange={e => setStudentForm({ ...studentForm, department: e.target.value })}>
+                    <option value="">Select Department</option>
+                    {departments?.map(dept => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Degree Program <span className="text-destructive">*</span></label>
+                  <Input required placeholder="B.Tech" value={studentForm.degree} onChange={e => setStudentForm({ ...studentForm, degree: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Semester <span className="text-destructive">*</span></label>
+                  <Input required type="number" min="1" max="10" placeholder="1" value={studentForm.semester} onChange={e => setStudentForm({ ...studentForm, semester: parseInt(e.target.value) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Batch <span className="text-destructive">*</span></label>
+                  <Input required placeholder="2023-2027" value={studentForm.batch} onChange={e => setStudentForm({ ...studentForm, batch: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Section</label>
+                  <Input placeholder="A" value={studentForm.section} onChange={e => setStudentForm({ ...studentForm, section: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Fee Quota <span className="text-destructive">*</span></label>
+                  <select required className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm" value={studentForm.feeQuota} onChange={e => setStudentForm({ ...studentForm, feeQuota: e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */ })}>
+                    <option value="general">General</option>
+                    <option value="merit">Merit</option>
+                    <option value="management">Management</option>
+                    <option value="nri">NRI</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={studentMutations.create.isPending}>
+                  {studentMutations.create.isPending ? 'Creating...' : 'Create Student'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card w-full max-w-lg rounded-xl border shadow-xl p-6 relative overflow-y-auto max-h-[90vh]"
+          >
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <h2 className="text-xl font-bold mb-4 font-display">Edit Student</h2>
+            <form onSubmit={handleEditStudent} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Full Name <span className="text-destructive">*</span></label>
+                  <Input required placeholder="John Doe" value={studentForm.name} onChange={e => setStudentForm({ ...studentForm, name: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Email (Read Only)</label>
+                  <Input disabled type="email" value={studentForm.email} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Phone Number</label>
+                  <Input placeholder="+1234567890" value={studentForm.phone} onChange={e => setStudentForm({ ...studentForm, phone: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Semester <span className="text-destructive">*</span></label>
+                  <Input required type="number" min="1" max="10" placeholder="1" value={studentForm.semester} onChange={e => setStudentForm({ ...studentForm, semester: parseInt(e.target.value) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Section</label>
+                  <Input placeholder="A" value={studentForm.section} onChange={e => setStudentForm({ ...studentForm, section: e.target.value })} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={studentMutations.update.isPending}>
+                  {studentMutations.update.isPending ? 'Updating...' : 'Save Changes'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,9 @@ import {
   getInstitutionalOverview, 
   getAdmissionsAnalytics, 
   getAcademicPerformanceAnalytics, 
-  getPlacementAnalytics 
+  getPlacementAnalytics,
+  getSystemActivity,
+  getFinancialHealthAnalytics
 } from '../controllers/analyticsController';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 import { authorizeRoles } from '../middlewares/roleMiddleware';
@@ -16,5 +18,7 @@ router.get('/overview', authorizeRoles('admin', 'management', 'hod'), getInstitu
 router.get('/admissions', authorizeRoles('admin', 'management'), getAdmissionsAnalytics);
 router.get('/academic-performance', authorizeRoles('admin', 'management', 'hod'), getAcademicPerformanceAnalytics);
 router.get('/placements', authorizeRoles('admin', 'management'), getPlacementAnalytics);
+router.get('/activity', authorizeRoles('admin', 'management'), getSystemActivity);
+router.get('/financial-health', authorizeRoles('admin', 'management'), getFinancialHealthAnalytics);
 
 export default router;

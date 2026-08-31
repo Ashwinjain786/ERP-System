@@ -410,6 +410,9 @@ export interface InstitutionalMetrics {
   placementRate?: number;
   nirfRankingScore?: number;
   naacGrade?: string;
+  totalDepartments?: number;
+  activeCourses?: number;
+  totalResearchGrants?: number;
 }
 
 export interface AdmissionsMetrics {
@@ -938,9 +941,38 @@ export interface CampusOneCollegeERPPlatformAPI {
     input: GetAcademicPerformanceAnalyticsInput;
     response: GetAcademicPerformanceAnalyticsOutput;
   };
+
   getPlacementAnalytics: {
     description: "Get campus recruitment records, top recruiters, and CTC packages";
     input: GetPlacementAnalyticsInput;
     response: GetPlacementAnalyticsOutput;
   };
+  getSystemActivity: {
+    description: "Get recent system activity logs";
+    input: Record<string, never>;
+    response: GetSystemActivityOutput;
+  };
+  getFinancialHealthAnalytics: {
+    description: "Get financial health including expenses, budget, and grants";
+    input: Record<string, never>;
+    response: GetFinancialHealthAnalyticsOutput;
+  };
 }
+
+export interface SystemActivity {
+  id: string;
+  action: string;
+  description: string;
+  type: string;
+  timestamp: string;
+}
+
+export type GetSystemActivityOutput = SystemActivity[];
+
+export interface FinancialHealthAnalytics {
+  expenseBreakdown: { name: string; value: number }[];
+  budgetUtilization: { department: string; utilized: number; allocated: number }[];
+  totalGrants: number;
+}
+
+export type GetFinancialHealthAnalyticsOutput = FinancialHealthAnalytics;

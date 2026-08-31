@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   Users, UserPlus, CheckCircle, Clock, XCircle, Search,
-  TrendingUp, FileText
+  TrendingUp, FileText, X, Loader2, Check
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ const item = {
 
 import { useQuery } from '@tanstack/react-query';
 import { apiConfig } from '@/api/apiCall';
+import { useAdmissionMutations } from '@/features/admin/hooks';
 
 function useAdmissions() {
   return useQuery({
@@ -66,8 +67,21 @@ export default function AdminAdmissions() {
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [selectedApp, setSelectedApp] = useState<AdmissionApplication | null>(null);
 
   const { data: admissionsData } = useAdmissions();
+  const admissionMutations = useAdmissionMutations();
+  
+  const handleUpdateStatus = async (status: 'approved' | 'rejected') => {
+    if (!selectedApp) return;
+    try {
+      await admissionMutations.updateStatus.mutateAsync({ id: selectedApp.id, status });
+      setSelectedApp({ ...selectedApp, status });
+    } catch (err) {
+      console.error('Failed to update status', err);
+      alert('Failed to update status');
+    }
+  };
   
   const applications = (Array.isArray(admissionsData) ? admissionsData : []) as AdmissionApplication[];
 
@@ -241,7 +255,7 @@ export default function AdminAdmissions() {
                             </span>
                           </td>
                           <td className="py-3 px-2 text-right">
-                            <Button variant="ghost" size="sm">View</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedApp(app)}>View</Button>
                           </td>
                         </motion.tr>
                       );
@@ -253,6 +267,77 @@ export default function AdminAdmissions() {
           </CardContent>
         </Card>
       </div>
+
+      {selectedApp && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl border-2 border-border w-full max-w-md shadow-xl"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="font-display text-lg font-semibold">Application Details</h2>
+              <Button variant="ghost" size="icon" onClick={() => setSelectedApp(null)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Applicant Name</p>
+                  <p className="font-semibold">{selectedApp.applicantName}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Application ID</p>
+                  <p className="font-mono">{selectedApp.applicationId}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Program</p>
+                  <p>{selectedApp.program}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Department</p>
+                  <p>{selectedApp.department}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">JEE/GATE Rank</p>
+                  <p className="font-mono">{selectedApp.jeeRank || selectedApp.gateRank || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Category / Quota</p>
+                  <p>{selectedApp.category} / {selectedApp.quota}</p>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-border flex justify-end gap-2">
+                {selectedApp.status === 'pending' ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      className="text-destructive hover:bg-destructive/10"
+                      onClick={() => handleUpdateStatus('rejected')}
+                      disabled={admissionMutations.updateStatus.isPending}
+                    >
+                      {admissionMutations.updateStatus.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
+                      Reject
+                    </Button>
+                    <Button 
+                      className="bg-success text-success-foreground hover:bg-success/90"
+                      onClick={() => handleUpdateStatus('approved')}
+                      disabled={admissionMutations.updateStatus.isPending}
+                    >
+                      {admissionMutations.updateStatus.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                      Approve
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" onClick={() => setSelectedApp(null)}>Close</Button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

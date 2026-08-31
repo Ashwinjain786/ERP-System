@@ -104,3 +104,14 @@ export const updateCourse = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const deleteCourse = async (req: Request, res: Response) => {
+  try {
+    const course = await prisma.course.delete({
+      where: { id: req.params.id }
+    });
+    res.json({ success: true, message: 'Course deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete course' });
+  }
+};

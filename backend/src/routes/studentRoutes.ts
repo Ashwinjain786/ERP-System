@@ -7,7 +7,8 @@ import {
   getStudentAttendance,
   getStudentGrades,
   getStudentFees,
-  getStudentDocuments
+  getStudentDocuments,
+  deleteStudent
 } from '../controllers/studentController';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 import { authorizeRoles } from '../middlewares/roleMiddleware';
@@ -24,5 +25,6 @@ router.get('/:id/attendance', authorizeRoles('admin', 'faculty', 'student'), get
 router.get('/:id/grades', authorizeRoles('admin', 'faculty', 'student'), getStudentGrades);
 router.get('/:id/fees', authorizeRoles('admin', 'finance_officer', 'student'), getStudentFees);
 router.get('/:id/documents', authorizeRoles('admin', 'faculty', 'student'), getStudentDocuments);
+router.delete('/:id', authorizeRoles('admin'), deleteStudent);
 
 export default router;
