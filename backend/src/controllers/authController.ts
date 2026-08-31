@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key';
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
