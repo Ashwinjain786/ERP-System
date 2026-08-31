@@ -1,22 +1,5 @@
 {
-  "experimentalServicesV2": {
-    "frontend": {
-      "root": "frontend",
-      "framework": "vite"
-    },
-    "backend": {
-      "root": "backend"
-    }
-  },
-  "experimentalServices": {
-    "frontend": {
-      "root": "frontend",
-      "framework": "vite"
-    },
-    "backend": {
-      "root": "backend"
-    }
-  },
+
   "services": {
     "frontend": {
       "root": "frontend",
