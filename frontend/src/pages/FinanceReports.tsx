@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import type { Variants } from 'motion';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend 
@@ -14,8 +13,6 @@ import { useFeeTransactions, useFeeDefaulters } from '@/features/finance/hooks';
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 };
-
-const COLORS = ['hsl(26.1, 100%, 34.7%)', 'hsl(41.5, 100%, 33.1%)', 'hsl(181.3, 100%, 28%)', 'hsl(229.3, 44.5%, 55.5%)', 'hsl(326.6, 37%, 46.7%)'];
 
 interface CustomTooltipProps {
   active?: boolean;

@@ -2,14 +2,12 @@ import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
-  Users, Calendar, ClipboardList, BookMarked, FileText, 
-  Clock, ArrowRight, BookOpen, TrendingUp, CalendarDays, Building2
+  Users, ClipboardList, ArrowRight, BookOpen, TrendingUp, CalendarDays
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useFacultyProfile, useFacultyWorkload, useFacultyAttendance } from '@/features/faculty/hooks';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -74,11 +72,10 @@ function QuickAction({ href, icon: Icon, label, description, color }: {
 export default function Faculty() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const { user } = useAuth();
   
   const { data: profile } = useFacultyProfile();
   const { data: workload } = useFacultyWorkload();
-  const { data: attendance } = useFacultyAttendance();
+  useFacultyAttendance();
 
   const totalHours = workload?.reduce((acc, w) => acc + w.hoursPerWeek, 0) || 0;
   const totalStudents = workload?.reduce((acc, w) => acc + (w.totalStudents || 0), 0) || 0;

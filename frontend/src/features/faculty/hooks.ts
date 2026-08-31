@@ -7,9 +7,19 @@ import {
   getCourses,
 } from '@/api/apiCall';
 
+type ProfileUser = {
+  facultyProfile?: {
+    id?: string;
+  };
+};
+
+function getFacultyId(user: unknown) {
+  return (user as ProfileUser | null | undefined)?.facultyProfile?.id;
+}
+
 export function useFacultyProfile() {
   const { user } = useAuth();
-  const facultyId = (user as any)?.facultyProfile?.id;
+  const facultyId = getFacultyId(user);
 
   return useQuery({
     queryKey: ['faculty', 'profile', facultyId],
@@ -23,7 +33,7 @@ export function useFacultyProfile() {
 
 export function useFacultyWorkload() {
   const { user } = useAuth();
-  const facultyId = (user as any)?.facultyProfile?.id;
+  const facultyId = getFacultyId(user);
 
   return useQuery({
     queryKey: ['faculty', 'workload', facultyId],

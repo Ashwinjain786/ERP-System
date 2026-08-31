@@ -3,17 +3,15 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
   BookOpen, Calendar, ClipboardList, DollarSign, FileText, 
-  Library, Clock, TrendingUp, Award, Bell, ArrowRight,
-  BookMarked, Users, GraduationCap, Activity
+  Library, TrendingUp, Award, Bell, ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useStudentProfile, useStudentAttendance, useStudentCourses, useStudentTimetable, useNotices, useExaminations } from '@/features/student/hooks';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import type { Course, TimetableEntry, Notice } from '@/api/apiInterface';
+import type { Course, TimetableEntry, Examination } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -107,9 +105,8 @@ function QuickAction({ href, icon: Icon, label, description }: {
 export default function Student() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const { user } = useAuth();
   
-  const { data: profile, isLoading: profileLoading } = useStudentProfile();
+  const { data: profile } = useStudentProfile();
   const { data: attendance } = useStudentAttendance();
   const { data: courses } = useStudentCourses();
   const { data: timetable } = useStudentTimetable();
@@ -117,7 +114,7 @@ export default function Student() {
 
   const todayClasses = timetable?.entries.filter((e: TimetableEntry) => e.dayOfWeek === 'Monday').slice(0, 3) || [];
   const { data: examinations } = useExaminations();
-  const upcomingExams = examinations?.slice(0, 2) || [];
+  const upcomingExams = (examinations?.slice(0, 2) || []) as Examination[];
 
   return (
     <div className="min-h-screen bg-background">
@@ -234,7 +231,7 @@ export default function Student() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {upcomingExams.map((exam: any) => (
+                  {upcomingExams.map((exam) => (
                     <div key={exam.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border-l-4 border-warning">
                       <div className="p-2 rounded-lg bg-warning/10">
                         <FileText className="w-5 h-5 text-warning" />

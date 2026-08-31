@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /student/
+Disallow: /faculty/
+Disallow: /admin/
+Disallow: /finance/
+Disallow: /library/
+Disallow: /analytics/
+Sitemap: https://campusone.edu/sitemap.xml

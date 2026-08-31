@@ -119,14 +119,18 @@ export class ApiProtocolError extends Error {
 // Runtime configuration for API client
 const getInitialBaseUrl = (): string => {
   try {
-    const meta = import.meta as any;
+    const meta = import.meta as ImportMeta & { env?: Record<string, string | undefined> };
     if (meta && meta.env) {
       if (meta.env.VITE_API_BASE_URL) return meta.env.VITE_API_BASE_URL;
       if (meta.env.VITE_API_URL) return meta.env.VITE_API_URL;
     }
   } catch {}
   try {
-    const g = globalThis as any;
+    const g = globalThis as typeof globalThis & {
+      process?: {
+        env?: Record<string, string | undefined>;
+      };
+    };
     if (g && g.process && g.process.env) {
       if (g.process.env.VITE_API_BASE_URL) return g.process.env.VITE_API_BASE_URL;
       if (g.process.env.NEXT_PUBLIC_API_URL) return g.process.env.NEXT_PUBLIC_API_URL;
@@ -149,7 +153,7 @@ async function request<T>(options: {
   operationId: string;
   method: string;
   path: string;
-  input?: any;
+  input?: Record<string, unknown>;
   pathParams: string[];
   queryParams: string[];
   headerParams: string[];
@@ -167,13 +171,13 @@ async function request<T>(options: {
   // 2. Build query parameters
   const query = new URLSearchParams();
   queryParams.forEach(param => {
-    if (input[param] !== undefined) {
-      if (Array.isArray(input[param])) {
-        input[param].forEach((val: any) => query.append(param, String(val)));
-      } else {
-        query.append(param, String(input[param]));
+      if (input[param] !== undefined) {
+        if (Array.isArray(input[param])) {
+          input[param].forEach((val: unknown) => query.append(param, String(val)));
+        } else {
+          query.append(param, String(input[param]));
+        }
       }
-    }
   });
 
   const queryString = query.toString();
@@ -192,12 +196,12 @@ async function request<T>(options: {
   });
 
   // 4. Construct request body
-  let body: any = undefined;
+  let body: BodyInit | undefined;
   if (!['GET', 'HEAD'].includes(method)) {
     if (input.body !== undefined) {
       body = JSON.stringify(input.body);
     } else {
-      const bodyObj: Record<string, any> = {};
+      const bodyObj: Record<string, unknown> = {};
       let hasBodyKeys = false;
       const paramKeys = new Set([...pathParams, ...queryParams, ...headerParams]);
       Object.keys(input).forEach(key => {

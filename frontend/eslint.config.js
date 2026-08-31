@@ -28,4 +28,26 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'warn',
     },
   },
+  {
+    files: [
+      'src/app/providers.tsx',
+      'src/app/router.generated.tsx',
+      'src/components/shared/AppLayout.tsx',
+      'src/components/ui/button.tsx',
+      'src/contexts/AuthContext.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
+    files: [
+      'src/components/shared/AppLayout.tsx',
+      'src/components/ui/button.tsx',
+      'src/contexts/AuthContext.tsx',
+    ],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
 )

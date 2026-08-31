@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useStudentGrades, useExaminations } from '@/features/student/hooks';
-import { cn } from '@/lib/utils';
 
 const container = {
   hidden: {},
@@ -36,7 +35,6 @@ export default function StudentExams() {
   const gradesData = grades || [];
   const examsData = examinations || [];
 
-  const sgpa = gradesData[0]?.sgpa || 0;
   const cgpa = gradesData[0]?.cgpa || 0;
   const totalCredits = gradesData[0]?.totalCredits || 0;
   const subjects = gradesData[0]?.subjects || [];

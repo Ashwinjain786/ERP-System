@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
-  GraduationCap, Search, Filter, Download, Plus,
-  MoreVertical, Mail, Phone, ChevronLeft, ChevronRight
+  GraduationCap, Search, Download, Plus,
+  MoreVertical, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useStudentsList, useDepartments } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
 
@@ -22,18 +20,6 @@ const item = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
-
-function StudentSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-12 bg-muted rounded-lg mb-3" />
-      <div className="h-10 bg-muted rounded-lg mb-2" />
-      <div className="h-10 bg-muted rounded-lg mb-2" />
-      <div className="h-10 bg-muted rounded-lg mb-2" />
-      <div className="h-10 bg-muted rounded-lg" />
-    </div>
-  );
-}
 
 function TableSkeleton() {
   return (
@@ -208,7 +194,7 @@ export default function AdminStudents() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedStudents.map((student, idx) => (
+                {paginatedStudents.map((student) => (
                         <motion.tr
                           key={student.id}
                           variants={item}

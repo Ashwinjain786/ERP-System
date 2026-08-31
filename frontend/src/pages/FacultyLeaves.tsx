@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFacultyProfile } from '@/features/faculty/hooks';
 import { cn } from '@/lib/utils';
+import type { Faculty } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -23,16 +24,27 @@ import { useQuery } from '@tanstack/react-query';
 
 const LEAVE_TYPES = ['Casual Leave', 'Sick Leave', 'Earned Leave', 'Maternity Leave', 'Paternity Leave'];
 
+type LeaveRecord = {
+  id: string;
+  type: string;
+  fromDate: string;
+  toDate: string;
+  days?: number;
+  reason: string;
+  status: 'approved' | 'rejected' | 'pending' | string;
+};
+
 export default function FacultyLeaves() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: profile } = useFacultyProfile();
+  const facultyProfile = profile as Faculty | undefined;
   const { data: leavesData } = useQuery({
-    queryKey: ['faculty', 'leaves', profile?.id],
-    queryFn: () => getFacultyLeaves(profile!.id),
-    enabled: !!profile?.id,
+    queryKey: ['faculty', 'leaves', facultyProfile?.id],
+    queryFn: () => getFacultyLeaves(facultyProfile!.id),
+    enabled: !!facultyProfile?.id,
   });
-  const leaves = Array.isArray(leavesData) ? leavesData : [];
+  const leaves = (Array.isArray(leavesData) ? leavesData : []) as LeaveRecord[];
   
   const [showForm, setShowForm] = useState(false);
   const [leaveType, setLeaveType] = useState('');
@@ -107,7 +119,7 @@ export default function FacultyLeaves() {
                 </div>
               </div>
               <div className="mt-3">
-                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{leaves.filter((l: any) => l.status === 'approved').reduce((acc: number, l: any) => acc + (l.days || 0), 0)}</span>
+                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{leaves.filter((l) => l.status === 'approved').reduce((acc, l) => acc + (l.days || 0), 0)}</span>
                 <span className="text-sm text-muted-foreground ml-2">days</span>
               </div>
             </CardContent>
@@ -122,7 +134,7 @@ export default function FacultyLeaves() {
                 </div>
               </div>
               <div className="mt-3">
-                <span className="font-display text-3xl font-bold tracking-tight tabular-nums text-warning">{leaves.filter((l: any) => l.status === 'pending').reduce((acc: number, l: any) => acc + (l.days || 0), 0)}</span>
+                <span className="font-display text-3xl font-bold tracking-tight tabular-nums text-warning">{leaves.filter((l) => l.status === 'pending').reduce((acc, l) => acc + (l.days || 0), 0)}</span>
                 <span className="text-sm text-muted-foreground ml-2">days</span>
               </div>
             </CardContent>
@@ -137,7 +149,7 @@ export default function FacultyLeaves() {
                 </div>
               </div>
               <div className="mt-3">
-                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{leaves.filter((l: any) => l.status !== 'rejected').reduce((acc: number, l: any) => acc + (l.days || 0), 0)}</span>
+                <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{leaves.filter((l) => l.status !== 'rejected').reduce((acc, l) => acc + (l.days || 0), 0)}</span>
                 <span className="text-sm text-muted-foreground ml-2">days</span>
               </div>
             </CardContent>
@@ -229,7 +241,7 @@ export default function FacultyLeaves() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {leaves.map((leave: any, idx: number) => (
+              {leaves.map((leave) => (
                 <div
                   key={leave.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border-2 border-transparent hover:border-primary/20"

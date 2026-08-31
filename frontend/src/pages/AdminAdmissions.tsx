@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   Users, UserPlus, CheckCircle, Clock, XCircle, Search,
-  TrendingUp, BarChart3, FileText, Calendar, ChevronDown
+  TrendingUp, FileText
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import type { Student } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -39,16 +40,6 @@ function useAdmissions() {
   });
 }
 
-function TableSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />
-      ))}
-    </div>
-  );
-}
-
 function getStatusColor(status: string) {
   switch (status) {
     case 'approved': return { bg: 'bg-success/10', text: 'text-success', icon: CheckCircle };
@@ -58,17 +49,29 @@ function getStatusColor(status: string) {
   }
 }
 
+type AdmissionApplication = Student & {
+  applicationId?: string;
+  applicantName?: string;
+  category?: string;
+  program?: string;
+  department?: string;
+  jeeRank?: number;
+  gateRank?: number;
+  quota?: string;
+  status: 'approved' | 'pending' | 'rejected' | string;
+};
+
 export default function AdminAdmissions() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const { data: admissionsData, isLoading, isError } = useAdmissions();
+  const { data: admissionsData } = useAdmissions();
   
-  const applications = Array.isArray(admissionsData) ? admissionsData : [];
+  const applications = (Array.isArray(admissionsData) ? admissionsData : []) as AdmissionApplication[];
 
-  const filteredAdmissions = applications.filter((app: any) => {
+  const filteredAdmissions = applications.filter((app) => {
     const matchesSearch = app.applicantName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.applicationId?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = !statusFilter || app.status === statusFilter;
@@ -77,9 +80,9 @@ export default function AdminAdmissions() {
 
   const stats = {
     totalApplications: applications.length,
-    approved: applications.filter((app: any) => app.status === 'approved').length,
-    pending: applications.filter((app: any) => app.status === 'pending').length,
-    rejected: applications.filter((app: any) => app.status === 'rejected').length,
+    approved: applications.filter((app) => app.status === 'approved').length,
+    pending: applications.filter((app) => app.status === 'pending').length,
+    rejected: applications.filter((app) => app.status === 'rejected').length,
   };
   const acceptanceRate = stats.totalApplications > 0 ? ((stats.approved / stats.totalApplications) * 100).toFixed(1) : '0.0';
 
@@ -114,8 +117,8 @@ export default function AdminAdmissions() {
 
             <Wrapper variants={item}>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {statCards.map((stat, idx) => (
-                  <Card key={idx} className="border-2 border-border/60 bg-card transition-all duration-200 hover:border-primary/30">
+                {statCards.map((stat) => (
+                  <Card key={stat.label} className="border-2 border-border/60 bg-card transition-all duration-200 hover:border-primary/30">
                     <CardContent className="p-5">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>

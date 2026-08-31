@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { 
-  TrendingUp, Briefcase, Award, DollarSign, 
+  Briefcase, Award, DollarSign, 
   ArrowLeft, BarChart3, Users, Target
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -188,7 +188,7 @@ export default function AnalyticsPlacement() {
                         }}
                       />
                       <Bar dataKey="students" name="Students" radius={[4, 4, 0, 0]}>
-                        {ctcDistribution.map((_entry, index) => (
+                      {ctcDistribution.map((_entry, index: number) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Bar>
@@ -253,7 +253,7 @@ export default function AnalyticsPlacement() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {recruiters.map((company, index) => (
+                    {recruiters.map((company) => (
                       <div key={company.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl">🏢</span>

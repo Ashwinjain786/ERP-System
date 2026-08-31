@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { BookMarked, Save, Download, Search, Filter, TrendingUp, Award } from 'lucide-react';
+import { Save, Download, Search, Filter } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFacultyCourses } from '@/features/faculty/hooks';
+import { useFacultyCourses, useFacultyStudents } from '@/features/faculty/hooks';
 import { cn } from '@/lib/utils';
+import type { Course, Student } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -20,20 +21,19 @@ const item = {
 
 const GRADE_OPTIONS = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F'];
 
-import { useFacultyStudents } from '@/features/faculty/hooks';
-
 export default function FacultyGrading() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: courses } = useFacultyCourses();
+  const courseList = (courses || []) as Course[];
   
-  const [selectedCourse, setSelectedCourse] = useState<string>(courses?.[0]?.id || '');
+  const [selectedCourse, setSelectedCourse] = useState<string>(courseList[0]?.id || '');
   const { data: studentsData = [] } = useFacultyStudents();
-  const studentsList = Array.isArray(studentsData) ? studentsData : [];
+  const studentsList = (Array.isArray(studentsData) ? studentsData : []) as (Student & { assignments?: number; midsem?: number; endsem?: number; attendance?: number })[];
 
   const [grades, setGrades] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    studentsList.forEach((s: any) => { initial[s.id] = ''; });
+    studentsList.forEach((s) => { initial[s.id] = ''; });
     return initial;
   });
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,13 +42,13 @@ export default function FacultyGrading() {
     setGrades(prev => ({ ...prev, [studentId]: grade }));
   };
 
-  const filteredStudents = studentsList.filter((s: any) => 
+  const filteredStudents = studentsList.filter((s) => 
     s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const calculateGrade = (student: any) => {
-    const weighted = (student.assignments * 0.3) + (student.midsem * 0.3) + (student.endsem * 0.4);
+  const calculateGrade = (student: Student & { assignments?: number; midsem?: number; endsem?: number }) => {
+    const weighted = ((student.assignments || 0) * 0.3) + ((student.midsem || 0) * 0.3) + ((student.endsem || 0) * 0.4);
     if (weighted >= 90) return 'A+';
     if (weighted >= 85) return 'A';
     if (weighted >= 80) return 'A-';
@@ -98,7 +98,7 @@ export default function FacultyGrading() {
                 <CardDescription>Choose a course to grade</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {courses?.map((course: any) => (
+                {courseList.map((course) => (
                   <button
                     key={course.id}
                     onClick={() => setSelectedCourse(course.id)}
@@ -147,7 +147,7 @@ export default function FacultyGrading() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <CardTitle className="text-lg font-display">Student Grades</CardTitle>
-                    <CardDescription>Enter grades for {courses?.find((c: any) => c.id === selectedCourse)?.name}</CardDescription>
+                    <CardDescription>Enter grades for {courseList.find((c) => c.id === selectedCourse)?.name}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative">
@@ -180,8 +180,8 @@ export default function FacultyGrading() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredStudents.map((student: any) => {
-                        const total = Math.round((student.assignments * 0.3) + (student.midsem * 0.3) + (student.endsem * 0.4));
+                      {filteredStudents.map((student) => {
+                        const total = Math.round(((student.assignments || 0) * 0.3) + ((student.midsem || 0) * 0.3) + ((student.endsem || 0) * 0.4));
                         return (
                           <motion.tr
                             key={student.id}

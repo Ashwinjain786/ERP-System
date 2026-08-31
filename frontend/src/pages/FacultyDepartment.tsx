@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Building2, Users, BookOpen, Plus, Search, Mail, Phone, MoreVertical, Award, Calendar, Clock } from 'lucide-react';
+import { Users, BookOpen, Plus, Search, Mail, Phone, MoreVertical } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useFacultyProfile } from '@/features/faculty/hooks';
 import { useFacultyList, useCourses } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
+import type { Course, Faculty } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -34,13 +35,13 @@ export default function FacultyDepartment() {
   const { data: allCourses = [] } = useCourses();
   
   // Filter by department name if profile is loaded
-  const facultyList = profile?.department ? allFaculty.filter(f => f.department === profile.department) : allFaculty;
-  const courses = profile?.department ? allCourses.filter(c => c.department === profile.department) : allCourses;
+  const facultyList = (profile?.department ? allFaculty.filter(f => f.department === profile.department) : allFaculty) as Faculty[];
+  const courses = (profile?.department ? allCourses.filter(c => c.department === profile.department) : allCourses) as Course[];
   
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredFaculty = facultyList.filter((f: any) => 
+  const filteredFaculty = facultyList.filter((f) =>
     f.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.designation?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -191,7 +192,7 @@ export default function FacultyDepartment() {
                       return (
                         <div key={semester} className="space-y-2">
                           <p className="text-sm font-medium text-muted-foreground">Semester {semester}</p>
-                          {semCourses.map((course: any) => (
+                          {semCourses.map((course) => (
                             <div key={course.code} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                               <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-lg bg-violet-500/10">
@@ -236,7 +237,7 @@ export default function FacultyDepartment() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {filteredFaculty.map((faculty: any) => (
+                {filteredFaculty.map((faculty) => (
                   <div
                     key={faculty.id}
                     className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border-2 border-transparent hover:border-primary/20"
@@ -297,12 +298,12 @@ export default function FacultyDepartment() {
             <CardContent>
               <div className="space-y-4">
                 {[4, 6].map(semester => {
-                  const semCourses = courses.filter((c: any) => c.semester === semester);
+                  const semCourses = courses.filter((c) => c.semester === semester);
                   return (
                     <div key={semester} className="space-y-3">
                       <h3 className="font-semibold text-foreground">Semester {semester}</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        {semCourses.map((course: any) => (
+                        {semCourses.map((course) => (
                           <div
                             key={course.code}
                             className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border-2 border-transparent hover:border-primary/20"

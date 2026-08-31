@@ -12,6 +12,7 @@ import {
   getInstitutionalOverview,
   createDepartment, updateDepartment, deleteDepartment,
 } from '@/api/apiCall';
+import type { DepartmentInput } from '@/api/apiInterface';
 
 export function useStudentsList() {
   return useQuery({
@@ -44,7 +45,7 @@ export function useDepartmentMutations() {
   const queryClient = useQueryClient();
   return {
     create: useMutation({ mutationFn: createDepartment, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] }) }),
-    update: useMutation({ mutationFn: ({ id, ...input }: { id: string } & any) => updateDepartment(id, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] }) }),
+    update: useMutation({ mutationFn: ({ id, ...input }: { id: string } & DepartmentInput) => updateDepartment(id, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] }) }),
     remove: useMutation({ mutationFn: deleteDepartment, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] }) }),
   };
 }

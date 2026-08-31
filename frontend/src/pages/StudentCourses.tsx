@@ -3,7 +3,6 @@ import { motion, useReducedMotion } from 'motion/react';
 import { BookOpen, User, CreditCard, FlaskConical, FileText, BookMarked } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useStudentCourses } from '@/features/student/hooks';
 import type { Course } from '@/api/apiInterface';
 import { cn } from '@/lib/utils';
@@ -18,7 +17,7 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-function CourseCard({ course, index }: { course: Course; index: number }) {
+function CourseCard({ course }: { course: Course }) {
   const typeColors = {
     theory: 'bg-blue-500',
     lab: 'bg-violet-500',
@@ -191,8 +190,8 @@ export default function StudentCourses() {
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {courses?.map((course: Course, index: number) => (
-              <CourseCard key={course.id} course={course} index={index} />
+            {courses?.map((course: Course) => (
+              <CourseCard key={course.id} course={course} />
             ))}
           </div>
         )}

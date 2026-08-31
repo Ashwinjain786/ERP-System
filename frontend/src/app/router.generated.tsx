@@ -6,10 +6,12 @@ import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
+import { SeoManager } from '@/components/shared/SeoManager';
 
 function RouteBoundary({ children, routeId }: { children: React.ReactNode; routeId: string }) {
   return (
     <div data-farcl-route-id={routeId} className="w-full h-full min-h-screen">
+      <SeoManager />
       <Suspense fallback={
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

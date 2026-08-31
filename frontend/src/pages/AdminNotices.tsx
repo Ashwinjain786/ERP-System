@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   Bell, Plus, Search, Calendar, AlertTriangle, Pin, Edit,
-  Trash2, X, CheckCircle, Clock, FileText
+  Trash2, X
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNotices } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
+import type { Notice as ApiNotice } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -22,19 +23,6 @@ const item = {
   hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
-
-interface Notice {
-  id: string;
-  title: string;
-  content: string;
-  category?: string;
-  targetRole: string;
-  publishedAt: string;
-  publishedBy: string;
-  isUrgent: boolean;
-}
-
-
 
 function getCategoryColor(category?: string) {
   switch (category) {
@@ -72,17 +60,16 @@ export default function AdminNotices() {
   });
 
   const { data: noticesData, isLoading, error } = useNotices();
-  const allNotices = Array.isArray(noticesData) ? noticesData : [];
+  const allNotices = (Array.isArray(noticesData) ? noticesData : []) as ApiNotice[];
 
-  const filteredNotices = allNotices.filter((notice: any) => {
+  const filteredNotices = allNotices.filter((notice) => {
     const matchesSearch = notice.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       notice.content?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !categoryFilter || notice.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const urgentNotices = allNotices.filter((n: any) => n.isUrgent);
-  const regularNotices = allNotices.filter((n: any) => !n.isUrgent);
+  const urgentNotices = allNotices.filter((n) => n.isUrgent);
 
   if (error) {
     return (

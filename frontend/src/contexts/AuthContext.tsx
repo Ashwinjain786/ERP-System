@@ -18,12 +18,12 @@ const TOKEN_KEY = 'campusone_jwt_token';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem(TOKEN_KEY));
 
   const fetchCurrentUser = useCallback(async () => {
     try {
       const data = await apiGetCurrentUser();
-      setUser(data as unknown as User);
+      setUser(data);
     } catch (error) {
       console.error('Failed to fetch current user', error);
       setUser(null);
@@ -38,9 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
       setApiConfig({ headers: { Authorization: `Bearer ${token}` } });
-      fetchCurrentUser();
-    } else {
-      setIsLoading(false);
+      Promise.resolve().then(() => {
+        void fetchCurrentUser();
+      });
     }
   }, [fetchCurrentUser]);
 
@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res && res.token) {
         localStorage.setItem(TOKEN_KEY, res.token);
         setApiConfig({ headers: { Authorization: `Bearer ${res.token}` } });
-        setUser(res.user as unknown as User);
-        return res.user as unknown as User;
+        setUser(res.user);
+        return res.user;
       }
     } finally {
       setIsLoading(false);

@@ -14,9 +14,19 @@ import {
 } from '@/api/apiCall';
 import type { Examination, CirculationRecord, PaymentInput } from '@/api/apiInterface';
 
+type ProfileUser = {
+  studentProfile?: {
+    id?: string;
+  };
+};
+
+function getStudentId(user: unknown) {
+  return (user as ProfileUser | null | undefined)?.studentProfile?.id;
+}
+
 export function useStudentProfile() {
   const { user } = useAuth();
-  const studentId = (user as any)?.studentProfile?.id;
+  const studentId = getStudentId(user);
 
   return useQuery({
     queryKey: ['student', 'profile', studentId],
@@ -30,7 +40,7 @@ export function useStudentProfile() {
 
 export function useStudentAttendance() {
   const { user } = useAuth();
-  const studentId = (user as any)?.studentProfile?.id;
+  const studentId = getStudentId(user);
 
   return useQuery({
     queryKey: ['student', 'attendance', studentId],
@@ -44,7 +54,7 @@ export function useStudentAttendance() {
 
 export function useStudentGrades() {
   const { user } = useAuth();
-  const studentId = (user as any)?.studentProfile?.id;
+  const studentId = getStudentId(user);
 
   return useQuery({
     queryKey: ['student', 'grades', studentId],
@@ -58,7 +68,7 @@ export function useStudentGrades() {
 
 export function useStudentFees() {
   const { user } = useAuth();
-  const studentId = (user as any)?.studentProfile?.id;
+  const studentId = getStudentId(user);
 
   return useQuery({
     queryKey: ['student', 'fees', studentId],
@@ -141,7 +151,7 @@ export function useExaminations() {
 
 export function useStudentDocuments() {
   const { user } = useAuth();
-  const studentId = (user as any)?.studentProfile?.id;
+  const studentId = getStudentId(user);
 
   return useQuery({
     queryKey: ['student', 'documents', studentId],

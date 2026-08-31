@@ -2,16 +2,14 @@ import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
-  Users, GraduationCap, BookOpen, Calendar, FileText, 
-  Bell, Shield, Building2, DollarSign, TrendingUp, 
-  BarChart3, ArrowRight, Activity, UserCheck, AlertTriangle
+  Users, GraduationCap, BookOpen, FileText, 
+  Bell, Shield, DollarSign, ArrowRight, UserCheck, AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useInstitutionalMetrics, useStudentsList, useFacultyList, useFeeDefaulters, useNotices } from '@/features/admin/hooks';
-import { useAuth } from '@/contexts/AuthContext';
+import { useInstitutionalMetrics, useStudentsList, useFeeDefaulters, useNotices } from '@/features/admin/hooks';
 import { cn } from '@/lib/utils';
 
 const container = {
@@ -82,15 +80,11 @@ function QuickAction({ href, icon: Icon, label, description, color }: {
 export default function Admin() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
-  const { user } = useAuth();
   
   const { data: metrics } = useInstitutionalMetrics();
   const { data: students } = useStudentsList();
-  const { data: faculty } = useFacultyList();
   const { data: defaulters } = useFeeDefaulters();
-  const { data: notices } = useNotices();
-
-  const pendingNotices = notices?.filter(n => n.isUrgent).length || 0;
+  useNotices();
 
   return (
     <div className="min-h-screen bg-background">

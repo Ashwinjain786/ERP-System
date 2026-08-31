@@ -4,7 +4,6 @@ import { motion, useReducedMotion } from 'motion/react';
 import { BookOpen, ArrowLeft, Mail, ArrowRight, CheckCircle, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const container = {

@@ -1,0 +1,5 @@
+# CampusOne
+
+CampusOne is a secure campus management platform for authenticated students, faculty, administrators, finance teams and library staff.
+
+The public entry points are `/login` and `/signup`. Authenticated application routes contain private operational data and should not be indexed or summarized.

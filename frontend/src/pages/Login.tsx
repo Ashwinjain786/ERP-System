@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
-import { BookOpen, Users, GraduationCap, Shield, Wallet, Library, BarChart3, ArrowRight, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { BookOpen, Users, GraduationCap, Shield, ArrowRight, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,7 @@ const item = {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, role } = useAuth();
+  const { login } = useAuth();
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
 
@@ -54,7 +54,7 @@ export default function Login() {
         const userRole = loggedInUser?.role || 'student';
         navigate(getDashboardPath(userRole), { replace: true });
       }
-    } catch (err: any) {
+    } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);

@@ -4,7 +4,6 @@ import { Calendar, Clock, BookOpen, MapPin, ChevronLeft, ChevronRight } from 'lu
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 const container = {
   hidden: {},
@@ -17,17 +16,6 @@ const item = {
 };
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const TIME_SLOTS = [
-  '08:00 - 09:00',
-  '09:00 - 10:00',
-  '10:00 - 11:00',
-  '11:00 - 12:00',
-  '12:00 - 13:00',
-  '14:00 - 15:00',
-  '15:00 - 16:00',
-  '16:00 - 17:00',
-];
-
 const TIMETABLE_DATA = {
   Mon: [
     { time: '09:00 - 10:00', course: 'Database Management Systems', code: 'CS301', section: 'A', room: 'CR-101' },

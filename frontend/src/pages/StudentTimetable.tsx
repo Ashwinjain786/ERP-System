@@ -1,11 +1,10 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Calendar, Clock, MapPin, User, BookOpen } from 'lucide-react';
+import { Calendar, MapPin } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStudentTimetable } from '@/features/student/hooks';
 import type { TimetableEntry } from '@/api/apiInterface';
-import { cn } from '@/lib/utils';
 
 const container = {
   hidden: {},
@@ -20,7 +19,7 @@ const item = {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
 const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
 
-function TimetableCell({ entry, day, period }: { entry: TimetableEntry | null; day: string; period: number }) {
+function TimetableCell({ entry }: { entry: TimetableEntry | null; day: string; period: number }) {
   if (!entry) {
     return (
       <div className="h-20 p-2 rounded-lg bg-muted/20 border border-dashed border-muted-foreground/20" />

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Check, X, Save, BookOpen, Users, Clock } from 'lucide-react';
+import { Check, X, Save, BookOpen } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useFacultyWorkload, useFacultyStudents } from '@/features/faculty/hooks';
 import { cn } from '@/lib/utils';
+import type { Student, WorkloadAssignment } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -17,59 +18,52 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
-
+type ClassRow = {
+  id: string;
+  courseName: string;
+  section: string;
+  time: string;
+  date: string;
+};
 
 export default function FacultyAttendance() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const { data: workload = [] } = useFacultyWorkload();
   const { data: studentsList = [] } = useFacultyStudents();
-  
-  const classesList = workload.map((w: any) => ({
-    id: w.id,
-    courseName: w.course?.name || 'Unknown Course',
+
+  const classesList = (workload as WorkloadAssignment[]).map((w) => ({
+    id: w.id ?? `${w.courseCode}-${w.section}`,
+    courseName: w.courseName,
     section: w.section,
-    time: w.timeSlot,
-    date: w.dayOfWeek,
-  }));
-  
+    time: w.hoursPerWeek ? `${w.hoursPerWeek} hrs/week` : 'Scheduled class',
+    date: 'Today',
+  })) satisfies ClassRow[];
+
   const [selectedClass, setSelectedClass] = useState<string>('');
-  const [attendance, setAttendance] = useState<Record<string, string>>({});
+  const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent'>>({});
 
-  React.useEffect(() => {
-    if (classesList.length > 0 && !selectedClass) {
-      setSelectedClass(classesList[0].id);
-    }
-  }, [classesList, selectedClass]);
-
-  React.useEffect(() => {
-    if (studentsList.length > 0) {
-      const initial: Record<string, string> = {};
-      studentsList.forEach((s: any) => {
-        initial[s.id] = 'present';
-      });
-      setAttendance(initial);
-    }
-  }, [studentsList]);
+  const studentRows = studentsList as Student[];
+  const currentClass = classesList.find(c => c.id === selectedClass) ?? classesList[0];
+  const presentCount = studentRows.filter(s => attendance[s.id] !== 'absent').length;
+  const totalCount = studentRows.length;
 
   const handleToggle = (studentId: string) => {
     setAttendance(prev => ({
       ...prev,
-      [studentId]: prev[studentId] === 'present' ? 'absent' : 'present'
+      [studentId]: prev[studentId] === 'present' ? 'absent' : 'present',
     }));
   };
 
   const handleMarkAll = (status: 'present' | 'absent') => {
     setAttendance(prev => {
       const updated = { ...prev };
-      studentsList.forEach(s => { updated[s.id] = status; });
+      studentRows.forEach(s => {
+        updated[s.id] = status;
+      });
       return updated;
     });
   };
-
-  const currentClass = classesList.find(c => c.id === selectedClass);
-  const presentCount = Object.values(attendance).filter(s => s === 'present').length;
-  const totalCount = Object.keys(attendance).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,10 +104,10 @@ export default function FacultyAttendance() {
                     key={cls.id}
                     onClick={() => setSelectedClass(cls.id)}
                     className={cn(
-                      "w-full text-left p-3 rounded-lg border-2 transition-all duration-200",
+                      'w-full text-left p-3 rounded-lg border-2 transition-all duration-200',
                       selectedClass === cls.id
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border/60 hover:border-primary/30 bg-card hover:bg-muted/30"
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border/60 hover:border-primary/30 bg-card hover:bg-muted/30'
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -137,9 +131,9 @@ export default function FacultyAttendance() {
                   <span className="font-semibold text-foreground">{presentCount}/{totalCount}</span>
                 </div>
                 <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-success transition-all duration-300"
-                    style={{ width: `${(presentCount / totalCount) * 100}%` }}
+                    style={{ width: `${totalCount > 0 ? (presentCount / totalCount) * 100 : 0}%` }}
                   />
                 </div>
               </CardContent>
@@ -152,9 +146,9 @@ export default function FacultyAttendance() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg font-display">
-                      {currentClass?.courseName} - Section {currentClass?.section}
+                      {currentClass?.courseName ?? 'No class selected'} - Section {currentClass?.section ?? '-'}
                     </CardTitle>
-                    <CardDescription>{currentClass?.date} • {currentClass?.time}</CardDescription>
+                    <CardDescription>{currentClass?.date ?? 'Today'} • {currentClass?.time ?? 'Scheduled class'}</CardDescription>
                   </div>
                   <Button className="gap-2">
                     <Save className="w-4 h-4" />
@@ -164,7 +158,7 @@ export default function FacultyAttendance() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {studentsList.map((student) => (
+                  {studentRows.map((student) => (
                     <motion.div
                       key={student.id}
                       layout
@@ -173,7 +167,7 @@ export default function FacultyAttendance() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="text-sm font-semibold text-primary">
-                            {student.name?.split(' ').map((n: string) => n[0]).join('')}
+                            {student.name?.split(' ').map((n) => n[0]).join('')}
                           </span>
                         </div>
                         <div>
@@ -185,13 +179,13 @@ export default function FacultyAttendance() {
                         <button
                           onClick={() => handleToggle(student.id)}
                           className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200",
-                            attendance[student.id] === 'present'
-                              ? "bg-success/10 text-success border-2 border-success/30"
-                              : "bg-muted text-muted-foreground border-2 border-transparent hover:border-border"
+                            'flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200',
+                            (attendance[student.id] ?? 'present') === 'present'
+                              ? 'bg-success/10 text-success border-2 border-success/30'
+                              : 'bg-muted text-muted-foreground border-2 border-transparent hover:border-border'
                           )}
                         >
-                          {attendance[student.id] === 'present' ? (
+                          {(attendance[student.id] ?? 'present') === 'present' ? (
                             <>
                               <Check className="w-4 h-4" />
                               Present

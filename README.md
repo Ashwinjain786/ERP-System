@@ -75,6 +75,16 @@ npm run dev
 Frontend runs at `http://localhost:5173`  
 Backend runs at `http://localhost:3000`
 
+## Production SEO and deployment
+
+The frontend is branded as CampusOne and uses `https://campusone.edu` as its canonical public origin. Update the `ORIGIN` constant in `frontend/src/components/shared/SeoManager.tsx`, `frontend/index.html`, `frontend/public/robots.txt`, `frontend/public/sitemap.xml`, and the social-card URLs if the production domain changes. DNS and registrar configuration are intentionally deployment-specific and must point the chosen domain at the web service.
+
+Each routed screen receives a unique title, description, canonical URL, Open Graph/Twitter card metadata, one route heading in the page UI, and CampusOne organization/local-business JSON-LD. Authenticated areas are excluded from crawling because they contain private data. `frontend/public/404.html` is served by the web server fallback through the SPA's branded `NotFound` route.
+
+Builds use route-level lazy loading, split chart and animation chunks, and `sourcemap: false` for production. Validate with `npm.cmd run build`; the existing lint command currently reports legacy errors in untouched pages, so those are tracked separately from this SEO work.
+
+Public machine-readable files are available at `/sitemap.xml`, `/robots.txt`, and `/llms.txt`. Brand assets are `/favicon.svg` and `/social-share.svg`.
+
 ---
 
 ## 📦 Departments & Features

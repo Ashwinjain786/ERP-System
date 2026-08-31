@@ -4,7 +4,6 @@ import { BookOpen, Users, Clock, Building2, GraduationCap } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFacultyWorkload } from '@/features/faculty/hooks';
-import { cn } from '@/lib/utils';
 
 const container = {
   hidden: {},

@@ -7,7 +7,7 @@ import {
 import { Link } from 'react-router-dom';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart as RePieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend
+  PieChart as RePieChart, Pie, Cell, AreaChart, Area, Legend
 } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

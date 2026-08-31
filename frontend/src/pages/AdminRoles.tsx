@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
-  Shield, Plus, Search, Users, Key, Lock, Unlock, Edit,
-  Trash2, CheckCircle, XCircle, Eye, Settings, ChevronDown
+  Shield, Plus, Search, Users, Key, Edit,
+  CheckCircle, XCircle
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+type AdminRole = {
+  id: string;
+  name: string;
+  description?: string;
+  status?: 'active' | 'inactive' | string;
+  users?: number;
+  permissions?: string[];
+  color?: string;
+};
 
 const container = {
   hidden: {},
@@ -22,7 +31,6 @@ const item = {
 
 import { useQuery } from '@tanstack/react-query';
 import { apiConfig } from '@/api/apiCall';
-import { useEffect } from 'react';
 
 function useRoles() {
   return useQuery({
@@ -68,34 +76,18 @@ for (const perm of PERMISSIONS) {
   }
 }
 
-function PermissionSkeleton() {
-  return (
-    <div className="animate-pulse space-y-2">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-12 bg-muted rounded-lg" />
-      ))}
-    </div>
-  );
-}
-
 export default function AdminRoles() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState<any | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Set<string>>(new Set());
 
   const { data: rolesData } = useRoles();
-  const roles = Array.isArray(rolesData) ? rolesData : [];
+  const roles = (Array.isArray(rolesData) ? rolesData : []) as AdminRole[];
+  const selectedRole = roles.find(role => role.id === selectedRoleId) ?? roles[0] ?? null;
 
-  useEffect(() => {
-    if (roles.length > 0 && !selectedRole) {
-      setSelectedRole(roles[0]);
-      setRolePermissions(new Set(roles[0].permissions || []));
-    }
-  }, [roles, selectedRole]);
-
-  const filteredRoles = roles.filter((role: any) =>
+  const filteredRoles = roles.filter((role) =>
     role.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     role.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -110,8 +102,8 @@ export default function AdminRoles() {
     setRolePermissions(newPerms);
   };
 
-  const selectRole = (role: any) => {
-    setSelectedRole(role);
+  const selectRole = (role: AdminRole) => {
+    setSelectedRoleId(role.id);
     setRolePermissions(new Set(role.permissions || []));
   };
 
@@ -149,7 +141,7 @@ export default function AdminRoles() {
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Active Roles</p>
                     <p className="font-display text-2xl font-bold tabular-nums text-success">
-                      {roles.filter((r: any) => r.status === 'active').length}
+                      {roles.filter((r) => r.status === 'active').length}
                     </p>
                   </CardContent>
                 </Card>
@@ -157,7 +149,7 @@ export default function AdminRoles() {
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Total Users</p>
                     <p className="font-display text-2xl font-bold tabular-nums">
-                      {roles.reduce((acc: number, r: any) => acc + (r.users || 0), 0)}
+                      {roles.reduce((acc: number, r) => acc + (r.users || 0), 0)}
                     </p>
                   </CardContent>
                 </Card>

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
-  BookOpen, Plus, Search, GraduationCap, Award, FileText,
-  Clock, Users, MoreVertical, Edit, Trash2
+  BookOpen, Plus, Search, MoreVertical
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,16 +21,6 @@ const item = {
 };
 
 
-function TableSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-14 bg-muted rounded-lg animate-pulse" />
-      ))}
-    </div>
-  );
-}
-
 function getCourseTypeColor(type?: string) {
   switch (type) {
     case 'theory': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -50,7 +39,7 @@ export default function AdminAcademics() {
   const [showDepartmentForm, setShowDepartmentForm] = useState(false);
   const [departmentForm, setDepartmentForm] = useState({ code: '', name: '' });
 
-  const { data: courses, isLoading: coursesLoading } = useCourses();
+  const { data: courses } = useCourses();
   const { data: departments } = useDepartments();
   const departmentMutations = useDepartmentMutations();
 
@@ -144,10 +133,7 @@ export default function AdminAcademics() {
               </div>
             </CardHeader>
             <CardContent>
-              {coursesLoading ? (
-                <TableSkeleton />
-              ) : (
-                <Wrapper variants={container} initial="hidden" animate="show">
+              <Wrapper variants={container} initial="hidden" animate="show">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -204,8 +190,7 @@ export default function AdminAcademics() {
                       </tbody>
                     </table>
                   </div>
-                </Wrapper>
-              )}
+              </Wrapper>
             </CardContent>
           </Card>
         )}

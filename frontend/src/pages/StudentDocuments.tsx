@@ -1,11 +1,12 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { FileText, Download, Clock, CheckCircle, AlertCircle, Printer, Mail, FileCheck, GraduationCap, Award, FileSignature } from 'lucide-react';
+import { FileText, Download, Clock, CheckCircle, AlertCircle, Printer, FileCheck, GraduationCap, Award, FileSignature } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useStudentDocuments } from '@/features/student/hooks';
 import { cn } from '@/lib/utils';
+import type { DocumentRequestResponse } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -152,7 +153,6 @@ function DocumentCard({ doc }: { doc: DocumentRequest }) {
 
 function RequestHistoryItem({ request }: { request: { id: string; documentName: string; status: 'completed' | 'pending' | 'processing'; requestedDate: string } }) {
   const isCompleted = request.status === 'completed';
-  const isPending = request.status === 'pending';
   const isProcessing = request.status === 'processing';
 
   return (
@@ -204,7 +204,7 @@ export default function StudentDocuments() {
   
   const { data: documents = [] } = useStudentDocuments();
   
-  const requestsList = documents.map((doc: any) => ({
+  const requestsList = (documents as DocumentRequestResponse[]).map((doc) => ({
     id: doc.id,
     documentName: doc.documentName,
     status: doc.status as 'completed' | 'pending' | 'processing',

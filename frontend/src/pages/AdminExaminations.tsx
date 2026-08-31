@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   FileText, Plus, Search, Calendar, Clock, CheckCircle,
-  AlertTriangle, Download, Users, BookOpen, Award
+  Download, Users, Award
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -33,13 +33,23 @@ function getStatusColor(status: string) {
   }
 }
 
+type ExamDuty = {
+  id: string;
+  examinerName: string;
+  subject: string;
+  date: string;
+  session: 'Forenoon' | 'Afternoon' | string;
+  room: string;
+  students: number;
+};
+
 export default function AdminExaminations() {
   const reduceMotion = useReducedMotion();
   const Wrapper = reduceMotion ? 'div' : motion.div;
   const [activeTab, setActiveTab] = useState<'schedule' | 'invigilation' | 'results'>('schedule');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: examinations, isLoading, error } = useExaminations();
+  const { data: examinations, error } = useExaminations();
 
   const stats = {
     totalExams: examinations?.length || 0,
@@ -250,7 +260,7 @@ export default function AdminExaminations() {
                       </tr>
                     </thead>
                     <tbody>
-                      {[] /* Removed MOCK_EXAM_DUTIES */ .map((duty: any) => (
+                      {([] as ExamDuty[]).map((duty) => (
                         <motion.tr
                           key={duty.id}
                           variants={item}

@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
-  Calendar, Plus, Save, Download, RotateCcw, GripVertical,
-  Clock, Users, MapPin, Filter, CheckCircle, AlertCircle
+  Calendar, Plus, Save, Download, RotateCcw,
+  Clock, MapPin, CheckCircle, AlertCircle
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCourses, useDepartments } from '@/features/admin/hooks';
-import { cn } from '@/lib/utils';
+import type { TimetableEntry } from '@/api/apiInterface';
 
 const container = {
   hidden: {},
@@ -59,14 +58,14 @@ export default function AdminTimetableBuilder() {
   const [selectedSemester, setSelectedSemester] = useState(4);
   const [selectedSection, setSelectedSection] = useState('A');
 
-  const { data: courses } = useCourses();
+  useCourses();
   const { data: departments } = useDepartments();
   const { data: timetablesData } = useTimetables();
   
   const timetables = Array.isArray(timetablesData) ? timetablesData : [];
 
   const getEntry = (day: string, period: number) => {
-    return timetables.find((e: any) => e.day === day && e.period === period);
+    return (timetables as TimetableEntry[]).find((e) => e.dayOfWeek === day && e.period === period);
   };
 
   return (
