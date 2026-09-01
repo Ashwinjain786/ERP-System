@@ -15,6 +15,8 @@ import { router } from './app/router.generated';
 import { setApiConfig } from './api/apiCall';
 import './index.css';
 
+import { Analytics } from '@vercel/analytics/react';
+
 setApiConfig({ baseUrl: '/api' });
 
 const queryClient = new QueryClient({
@@ -34,6 +36,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ErrorBoundary>
           <RouterProvider router={router} />
           <Toaster position="top-right" richColors />
+          <Analytics />
         </ErrorBoundary>
       </AuthProvider>
     </QueryClientProvider>
