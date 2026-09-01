@@ -129,22 +129,28 @@ export function AppLayout({ children }: AppLayoutProps) {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1 flex-1">
+          <nav className="hidden md:flex items-center gap-0.5 flex-1 overflow-hidden">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || 
+                (item.href !== '/admin' && item.href !== '/student' && item.href !== '/faculty' && item.href !== '/finance' && item.href !== '/library' && item.href !== '/analytics' && location.pathname.startsWith(item.href));
               return (
                 <Link
                   key={item.href}
                   to={item.href}
+                  title={item.label}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                    "group flex items-center gap-0 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 overflow-hidden shrink-0",
                     isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                 >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  <span
+                    className="overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out max-w-0 group-hover:max-w-[120px] group-hover:ml-1.5 opacity-0 group-hover:opacity-100"
+                  >
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
