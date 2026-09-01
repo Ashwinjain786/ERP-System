@@ -95,8 +95,12 @@ export const createStudent = async (req: Request, res: Response) => {
     } else {
        res.status(500).json({ success: false, message: 'Failed to create student profile' });
     }
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to create student' });
+  } catch (error: any) {
+    console.error('Failed to create student:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ success: false, message: 'A user with this email or phone already exists.' });
+    }
+    res.status(500).json({ success: false, message: 'Failed to create student', error: error.message });
   }
 };
 

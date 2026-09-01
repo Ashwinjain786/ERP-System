@@ -146,6 +146,7 @@ export default function AdminStudents() {
         batch: studentForm.batch,
         semester: studentForm.semester,
         section: studentForm.section,
+        feeQuota: studentForm.feeQuota,
       });
       setShowEditModal(false);
       setEditStudentId(null);
