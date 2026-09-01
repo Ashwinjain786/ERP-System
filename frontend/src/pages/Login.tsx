@@ -101,16 +101,15 @@ export default function Login() {
             </motion.div>
 
             <motion.div variants={item} className="space-y-4">
-              <p className="text-sm text-muted-foreground font-medium tracking-wide uppercase">Portals</p>
               <div className="grid grid-cols-4 gap-2">
                 {[
                   { name: 'Student', icon: <GraduationCap className="w-5 h-5" />, color: 'bg-emerald-500' },
                   { name: 'Faculty', icon: <Users className="w-5 h-5" />, color: 'bg-blue-500' },
                   { name: 'Admin', icon: <Shield className="w-5 h-5" />, color: 'bg-violet-500' },
-                  { name: 'Finance', icon: <DollarSign className="w-5 h-5" />, color: 'bg-warning' },
-                  { name: 'Library', icon: <Library className="w-5 h-5" />, color: 'bg-destructive' },
-                  { name: 'Analytics', icon: <BarChart3 className="w-5 h-5" />, color: 'bg-info' },
-                  { name: 'HOD', icon: <Briefcase className="w-5 h-5" />, color: 'bg-primary' },
+                  { name: 'Finance', icon: <DollarSign className="w-5 h-5" />, color: 'bg-amber-500' },
+                  { name: 'Library', icon: <Library className="w-5 h-5" />, color: 'bg-rose-500' },
+                  { name: 'Analytics', icon: <BarChart3 className="w-5 h-5" />, color: 'bg-cyan-500' },
+                  { name: 'HOD', icon: <Briefcase className="w-5 h-5" />, color: 'bg-fuchsia-500' },
                 ].map((dept) => (
                   <div
                     key={dept.name}
