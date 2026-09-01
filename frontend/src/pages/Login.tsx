@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
-import { BookOpen, Users, GraduationCap, Shield, ArrowRight, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { BookOpen, Users, GraduationCap, Shield, ArrowRight, Eye, EyeOff, Sparkles, DollarSign, Library, BarChart3, Briefcase } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,44 +100,28 @@ export default function Login() {
               </p>
             </motion.div>
 
-            <motion.div variants={item} className="space-y-3">
-              <div className="flex items-center justify-center gap-3 text-sm">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">Demo Accounts</span>
-                <Sparkles className="w-4 h-4 text-primary" />
-              </div>
-              
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => quickLogin('student@campus.edu')}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
-                >
-                  <div className={`p-2 rounded-lg bg-emerald-500 text-white group-hover:scale-110 transition-transform`}>
-                    <GraduationCap className="w-5 h-5" />
+            <motion.div variants={item} className="space-y-4">
+              <p className="text-sm text-muted-foreground font-medium tracking-wide uppercase">Portals</p>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { name: 'Student', icon: <GraduationCap className="w-5 h-5" />, color: 'bg-emerald-500' },
+                  { name: 'Faculty', icon: <Users className="w-5 h-5" />, color: 'bg-blue-500' },
+                  { name: 'Admin', icon: <Shield className="w-5 h-5" />, color: 'bg-violet-500' },
+                  { name: 'Finance', icon: <DollarSign className="w-5 h-5" />, color: 'bg-warning' },
+                  { name: 'Library', icon: <Library className="w-5 h-5" />, color: 'bg-destructive' },
+                  { name: 'Analytics', icon: <BarChart3 className="w-5 h-5" />, color: 'bg-info' },
+                  { name: 'HOD', icon: <Briefcase className="w-5 h-5" />, color: 'bg-primary' },
+                ].map((dept) => (
+                  <div
+                    key={dept.name}
+                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl border border-border/60 bg-background/40 backdrop-blur-sm"
+                  >
+                    <div className={`w-8 h-8 rounded-lg ${dept.color} flex items-center justify-center shrink-0 text-white`}>
+                      {dept.icon}
+                    </div>
+                    <span className="text-[10px] font-medium text-foreground/80 leading-tight text-center">{dept.name}</span>
                   </div>
-                  <span className="text-xs font-medium">Student</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('faculty@campus.edu')}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
-                >
-                  <div className={`p-2 rounded-lg bg-blue-500 text-white group-hover:scale-110 transition-transform`}>
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <span className="text-xs font-medium">Faculty</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('admin@campus.edu')}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
-                >
-                  <div className={`p-2 rounded-lg bg-violet-500 text-white group-hover:scale-110 transition-transform`}>
-                    <Shield className="w-5 h-5" />
-                  </div>
-                  <span className="text-xs font-medium">Admin</span>
-                </button>
+                ))}
               </div>
             </motion.div>
           </Wrapper>
