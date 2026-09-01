@@ -129,7 +129,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-0.5 flex-1 overflow-hidden">
+          <nav className="hidden md:flex items-center justify-center gap-0.5 flex-1 overflow-hidden">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href || 
                 (item.href !== '/admin' && item.href !== '/student' && item.href !== '/faculty' && item.href !== '/finance' && item.href !== '/library' && item.href !== '/analytics' && location.pathname.startsWith(item.href));
