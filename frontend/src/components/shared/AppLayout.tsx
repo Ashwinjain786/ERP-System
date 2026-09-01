@@ -168,9 +168,11 @@ export function AppLayout({ children }: AppLayoutProps) {
                 className="gap-2 hidden sm:flex"
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
               >
-                <div className={`w-8 h-8 rounded-full ${config?.color || 'bg-primary'} flex items-center justify-center text-background font-semibold text-sm`}>
-                  {user?.name?.charAt(0) || 'U'}
-                </div>
+                <img
+                  src={user?.avatarUrl || `https://api.dicebear.com/9.x/toon-head/svg?seed=${encodeURIComponent(user?.department || user?.name || 'User')}`}
+                  alt="Avatar"
+                  className="w-8 h-8 rounded-full object-cover border-2 border-primary/20"
+                />
                 <span className="font-medium text-sm max-w-[100px] truncate">{user?.name || 'User'}</span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </Button>
