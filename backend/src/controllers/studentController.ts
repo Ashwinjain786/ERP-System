@@ -279,11 +279,25 @@ export const getStudentFees = async (req: AuthRequest, res: Response) => {
     if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
     // Look up the fee structure for this student's program
-    const feeStructure = await prisma.feeStructure.findUnique({
+    let feeStructure = await prisma.feeStructure.findUnique({
       where: { program_quota: { program: student.degree || 'B.Tech', quota: student.feeQuota } },
     });
+    
     if (!feeStructure) {
-      return res.status(422).json({ success: false, message: 'No fee structure is configured for this student program' });
+      // Return a zero-balance placeholder instead of throwing a 422 error
+      feeStructure = {
+        id: 'unconfigured',
+        program: student.degree || 'B.Tech',
+        quota: student.feeQuota,
+        tuitionFee: 0,
+        hostelFee: 0,
+        examFee: 0,
+        libraryDeposit: 0,
+        totalAmount: 0,
+        dueDate: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
     }
 
     const totalAnnualFee = feeStructure.totalAmount;
