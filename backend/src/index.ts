@@ -55,7 +55,7 @@ apiRouter.use('/faculty', facultyRoutes);
 apiRouter.use('/departments', departmentRoutes);
 apiRouter.use('/courses', courseRoutes);
 apiRouter.use('/attendance', attendanceRoutes);
-apiRouter.use('/timetables', timetableRoutes);
+apiRouter.use('/academics/timetable', timetableRoutes);
 apiRouter.use('/examinations', examinationRoutes);
 apiRouter.use('/fees', feeRoutes);
 apiRouter.use('/library', libraryRoutes);

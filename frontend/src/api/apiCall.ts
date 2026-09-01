@@ -547,7 +547,7 @@ export const getTimetables = async (input: GetTimetablesInput): Promise<GetTimet
   return request<GetTimetablesOutput>({
     operationId: 'getTimetables',
     method: 'GET',
-    path: '/timetables',
+    path: '/academics/timetable',
     input: input,
     pathParams: [],
     queryParams: ["department","semester","section","facultyId"],
@@ -559,7 +559,7 @@ export const generateTimetable = async (input: GenerateTimetableInput): Promise<
   return request<GenerateTimetableOutput>({
     operationId: 'generateTimetable',
     method: 'POST',
-    path: '/timetables',
+    path: '/academics/timetable/generate',
     input: input,
     pathParams: [],
     queryParams: [],
@@ -850,7 +850,7 @@ export const deleteNotice = async (id: string): Promise<any> => request<any>({ o
 export const updateExamination = async (id: string, input: any): Promise<any> => request<any>({ operationId: 'updateExamination', method: 'PUT', path: `/examinations/${id}`, input, pathParams: [], queryParams: [], headerParams: [] });
 export const deleteExamination = async (id: string): Promise<any> => request<any>({ operationId: 'deleteExamination', method: 'DELETE', path: `/examinations/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
 export const releaseHallTickets = async (id: string): Promise<any> => request<any>({ operationId: 'releaseHallTickets', method: 'POST', path: `/examinations/${id}/hall-tickets`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
-export const deleteCourse = async (id: string): Promise<any> => request<any>({ operationId: 'deleteCourse', method: 'DELETE', path: `/academics/courses/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
+export const deleteCourse = async (id: string): Promise<any> => request<any>({ operationId: 'deleteCourse', method: 'DELETE', path: `/courses/${id}`, input: {}, pathParams: [], queryParams: [], headerParams: [] });
 export const updateRolePermissions = async (role: string, input: any): Promise<any> => request<any>({ operationId: 'updateRolePermissions', method: 'PUT', path: `/admin/roles/${role}/permissions`, input, pathParams: [], queryParams: [], headerParams: [] });
-export const updateAdmissionStatus = async (id: string, input: any): Promise<any> => request<any>({ operationId: 'updateAdmissionStatus', method: 'PATCH', path: `/admissions/${id}/status`, input, pathParams: [], queryParams: [], headerParams: [] });
-export const saveTimetable = async (input: any): Promise<any> => request<any>({ operationId: 'saveTimetable', method: 'POST', path: `/academics/timetable/generate`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const updateAdmissionStatus = async (id: string, input: any): Promise<any> => request<any>({ operationId: 'updateAdmissionStatus', method: 'PUT', path: `/admin/admissions/${id}`, input, pathParams: [], queryParams: [], headerParams: [] });
+export const saveTimetable = async (input: any): Promise<any> => request<any>({ operationId: 'saveTimetable', method: 'POST', path: `/academics/timetable/save`, input, pathParams: [], queryParams: [], headerParams: [] });

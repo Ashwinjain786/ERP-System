@@ -44,7 +44,7 @@ export const getAllTimetables = (params?: { section?: string; semester?: number;
           .map(([k, v]) => [k, String(v)])
       ).toString()
     : '';
-  return fetchWithConfig(`/timetables${qs}`);
+  return fetchWithConfig(`/academics/timetable${qs}`);
 };
 
 export const getAllNotices = (targetRole?: string) =>

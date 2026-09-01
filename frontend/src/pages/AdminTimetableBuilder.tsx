@@ -39,7 +39,7 @@ function useTimetables() {
   return useQuery({
     queryKey: ['admin', 'timetables'],
     queryFn: async () => {
-      const res = await fetch(`${apiConfig.baseUrl}/timetable/all`, {
+      const res = await fetch(`${apiConfig.baseUrl}/academics/timetable`, {
         headers: {
           'Content-Type': 'application/json',
           ...apiConfig.headers,
