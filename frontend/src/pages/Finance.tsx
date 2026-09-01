@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useFeeTransactions, useFeeDefaulters } from '@/features/finance/hooks';
 import { cn } from '@/lib/utils';
+import { AddStaffDialog } from '@/components/shared/AddStaffDialog';
 
 const container = {
   hidden: {},
@@ -80,6 +81,7 @@ export default function Finance() {
                     Fee management and financial operations
                   </p>
                 </div>
+                <AddStaffDialog role="finance_officer" roleLabel="Finance Officer" />
               </div>
             </Wrapper>
 

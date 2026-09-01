@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
+import bcrypt from 'bcryptjs';
+import { Role } from '@prisma/client';
 
 export const getAdmissions = async (req: Request, res: Response) => {
   try {
@@ -115,3 +117,37 @@ export const updateRolePermissions = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+
+
+export const createAdminUser = async (req: Request, res: Response) => {
+  try {
+    const { name, email, phone, role } = req.body;
+    
+    // Validate role
+    const validRoles: Role[] = ['admin', 'finance_officer', 'librarian', 'management', 'hod'];
+    if (!validRoles.includes(role as Role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role for this endpoint' });
+    }
+
+    const plainPassword = `${role.split('_')[0]}123`;
+    const defaultPassword = await bcrypt.hash(plainPassword, 10);
+    const generatedId = `${role.toUpperCase().substring(0,3)}${Math.floor(100 + Math.random() * 900)}`;
+
+    const created = await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        password: defaultPassword,
+        role: role as Role,
+      }
+    });
+
+    res.status(201).json({ success: true, user: created, credentials: { id: generatedId, password: plainPassword } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

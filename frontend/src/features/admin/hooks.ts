@@ -17,7 +17,8 @@ import {
   createExamination, updateExamination, deleteExamination, releaseHallTickets, remindFaculty,
   createCourse, updateCourse, deleteCourse,
   updateRolePermissions,
-  updateAdmissionStatus, saveTimetable
+  updateAdmissionStatus, saveTimetable,
+  createAdminUser
 } from '@/api/apiCall';
 import type { DepartmentInput } from '@/api/apiInterface';
 
@@ -252,5 +253,11 @@ export function useInstitutionalMetrics() {
     queryFn: async () => {
       return await getInstitutionalOverview();
     },
+  });
+}
+
+export function useCreateAdminUser() {
+  return useMutation({
+    mutationFn: createAdminUser,
   });
 }

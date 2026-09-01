@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useLibraryBooks, useCirculationRecords, useLibraryFines } from '@/features/library/hooks';
 import { cn } from '@/lib/utils';
+import { AddStaffDialog } from '@/components/shared/AddStaffDialog';
 
 const container = {
   hidden: {},
@@ -71,6 +72,9 @@ export default function Library() {
                   <p className="mt-1 text-muted-foreground">
                     Central library management and circulation
                   </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <AddStaffDialog role="librarian" roleLabel="Librarian" />
                 </div>
               </div>
             </Wrapper>
