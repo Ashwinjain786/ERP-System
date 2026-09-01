@@ -43,6 +43,9 @@ const ADMIN_NAV = [
   { href: '/admin/timetable-builder', label: 'Timetable', icon: Calendar },
   { href: '/admin/examinations', label: 'Exams', icon: FileText },
   { href: '/admin/notices', label: 'Notices', icon: Bell },
+  { href: '/finance', label: 'Finance', icon: DollarSign },
+  { href: '/library', label: 'Library', icon: Library },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/roles', label: 'Roles', icon: Shield },
 ];
 
