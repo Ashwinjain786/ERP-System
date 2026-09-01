@@ -107,7 +107,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const config = role ? ROLE_CONFIG[role] : ROLE_CONFIG.student;
   const navItems = config?.nav || STUDENT_NAV;
-  const breadcrumbItems = location.pathname.split('/').filter(Boolean);
 
   const handleLogout = () => {
     logout();
@@ -238,17 +237,6 @@ export function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       <main className="flex-1">
-        {breadcrumbItems.length > 0 && (
-          <nav aria-label="Breadcrumb" className="mx-auto max-w-[1600px] px-4 pt-4 text-sm text-muted-foreground md:px-6">
-            <ol className="flex flex-wrap items-center gap-2">
-              <li><Link to="/" className="hover:text-primary">CampusOne</Link></li>
-              {breadcrumbItems.map((part, index) => {
-                const href = `/${breadcrumbItems.slice(0, index + 1).join('/')}`;
-                return <li key={href} className="flex items-center gap-2"><span aria-hidden="true">/</span><Link to={href} className="capitalize hover:text-primary">{part.replace(/-/g, ' ')}</Link></li>;
-              })}
-            </ol>
-          </nav>
-        )}
         {children}
       </main>
     </div>
