@@ -155,7 +155,13 @@ export default function AdminTimetableBuilder() {
                   }}>
                     <RotateCcw className="w-4 h-4 mr-1" /> Reset
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    if (!selectedDepartment) {
+                      alert('Please select a department first');
+                      return;
+                    }
+                    window.open(`${apiConfig.baseUrl}/academics/timetable/export?department=${selectedDepartment}&semester=${selectedSemester}&section=${selectedSection}`, '_blank');
+                  }}>
                     <Download className="w-4 h-4 mr-1" /> Export
                   </Button>
                   <Button size="sm" onClick={handleSaveTimetable} disabled={timetableMutations.save.isPending}>
@@ -206,9 +212,6 @@ export default function AdminTimetableBuilder() {
                         ))}
                       </select>
                     </div>
-                    <Button variant="outline" className="h-10">
-                      <Filter className="w-4 h-4 mr-2" /> Apply Filters
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -234,7 +237,9 @@ export default function AdminTimetableBuilder() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Unassigned</p>
-                      <p className="font-display text-xl font-bold">8</p>
+                      <p className="font-display text-xl font-bold">
+                        {DAYS.length * TIME_SLOTS.length - localEntries.length}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -245,7 +250,7 @@ export default function AdminTimetableBuilder() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Total Periods</p>
-                      <p className="font-display text-xl font-bold">42</p>
+                      <p className="font-display text-xl font-bold">{localEntries.length}</p>
                     </div>
                   </CardContent>
                 </Card>

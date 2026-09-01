@@ -267,7 +267,12 @@ export default function AdminNotices() {
                               </div>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className={`h-8 w-8 ${notice.isPinned ? 'text-primary' : ''}`}
+                                onClick={() => noticeMutations.pin.mutate(notice.id)}
+                              >
                                 <Pin className="w-4 h-4" />
                               </Button>
                               <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary" onClick={() => openEditModal(notice as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)}>

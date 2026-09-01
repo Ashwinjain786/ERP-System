@@ -169,3 +169,76 @@ const calculateGrade = (total: number) => {
   if (total >= 50) return 'D';
   return 'F';
 };
+
+export const exportExaminations = async (req: Request, res: Response) => {
+  try {
+    const exams = await prisma.examination.findMany({ orderBy: { startDate: 'desc' } });
+    const csvRows = [['ID', 'Title', 'Semester', 'AcademicYear', 'Status', 'Start Date', 'End Date']];
+    exams.forEach(e => csvRows.push([
+      e.id, `"${e.title}"`, e.semester.toString(), e.academicYear || '', e.status, 
+      e.startDate.toISOString().split('T')[0], e.endDate.toISOString().split('T')[0]
+    ]));
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="examinations_list.csv"');
+    res.send(csvRows.map(r => r.join(",")).join("\n"));
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error exporting examinations' });
+  }
+};
+
+export const getExamStats = async (req: Request, res: Response) => {
+  try {
+    const results = await prisma.examResult.findMany({ where: { examinationId: req.params.id } });
+    if (results.length === 0) return res.json({ message: 'No results found', passPercentage: 0 });
+    
+    const passed = results.filter(r => r.totalScore >= 50).length;
+    const passPercentage = parseFloat(((passed / results.length) * 100).toFixed(1));
+    const averageScore = parseFloat((results.reduce((a, b) => a + b.totalScore, 0) / results.length).toFixed(1));
+    
+    res.json({ totalStudents: results.length, passed, passPercentage, averageScore });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const downloadExamResults = async (req: Request, res: Response) => {
+  try {
+    const results = await prisma.examResult.findMany({
+      where: { examinationId: req.params.id },
+      include: { student: { include: { user: true } }, course: true }
+    });
+    const csvRows = [['Student Name', 'Roll Number', 'Course', 'Internal', 'EndSem', 'Total', 'Grade']];
+    results.forEach(r => csvRows.push([
+      `"${r.student.user.name}"`, r.student.rollNumber, `"${r.course.name}"`, 
+      r.internalScore?.toString() || '0', r.endSemScore?.toString() || '0', 
+      r.totalScore.toString(), r.grade
+    ]));
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="exam_results_${req.params.id}.csv"`);
+    res.send(csvRows.map(r => r.join(",")).join("\n"));
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error exporting results' });
+  }
+};
+
+export const remindFaculty = async (req: Request, res: Response) => {
+  try {
+    const exam = await prisma.examination.findUnique({ where: { id: req.params.id } });
+    if (!exam) return res.status(404).json({ success: false, message: 'Exam not found' });
+
+    await prisma.notice.create({
+      data: {
+        title: `URGENT: Upload Results for ${exam.title}`,
+        content: `Faculty members are requested to upload the results for ${exam.title} (Semester ${exam.semester}) immediately.`,
+        category: 'examination',
+        targetRole: 'faculty',
+        isUrgent: true,
+        publishedBy: (req as any).user?.id
+      }
+    });
+
+    res.json({ success: true, message: 'Reminder notice sent successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error sending reminder' });
+  }
+};

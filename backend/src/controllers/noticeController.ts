@@ -23,10 +23,28 @@ export const getNotices = async (req: Request, res: Response) => {
 
     const notices = await prisma.notice.findMany({
       where: and.length ? { AND: and } : {},
-      orderBy: { publishedAt: 'desc' }
+      orderBy: [
+        { isPinned: 'desc' },
+        { publishedAt: 'desc' }
+      ]
     });
 
     res.json(notices);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const togglePinNotice = async (req: Request, res: Response) => {
+  try {
+    const notice = await prisma.notice.findUnique({ where: { id: req.params.id } });
+    if (!notice) return res.status(404).json({ success: false, message: 'Notice not found' });
+    
+    const updated = await prisma.notice.update({
+      where: { id: req.params.id },
+      data: { isPinned: !notice.isPinned }
+    });
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }

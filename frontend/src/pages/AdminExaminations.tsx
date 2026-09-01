@@ -14,6 +14,8 @@ import { useExaminations, useExaminationMutations } from '@/features/admin/hooks
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 
+import { apiConfig } from '@/api/apiCall';
+
 const container = {
   hidden: {},
   show: { transition: { staggerChildren: 0.06 } },
@@ -123,7 +125,7 @@ export default function AdminExaminations() {
     totalExams: examinations?.length || 0,
     upcoming: examinations?.filter(e => e.status === 'upcoming').length || 0,
     completed: examinations?.filter(e => e.status === 'completed').length || 0,
-    pendingResults: 3,
+    pendingResults: examinations?.filter(e => e.status === 'ongoing').length || 0,
   };
 
   const tabs = [
@@ -161,7 +163,7 @@ export default function AdminExaminations() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => window.open(`${apiConfig.baseUrl}/examinations/export`, '_blank')}>
                     <Download className="w-4 h-4 mr-2" /> Export
                   </Button>
                   <Button size="sm" onClick={handleOpenAddModal}>
@@ -325,55 +327,15 @@ export default function AdminExaminations() {
               </div>
             </CardHeader>
             <CardContent>
-              <Wrapper variants={container} initial="hidden" animate="show">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-border/60">
-                        <th className="text-left pb-3 px-2 text-sm font-semibold text-muted-foreground">Examiner</th>
-                        <th className="text-left pb-3 px-2 text-sm font-semibold text-muted-foreground">Subject</th>
-                        <th className="text-center pb-3 px-2 text-sm font-semibold text-muted-foreground">Date</th>
-                        <th className="text-center pb-3 px-2 text-sm font-semibold text-muted-foreground">Session</th>
-                        <th className="text-center pb-3 px-2 text-sm font-semibold text-muted-foreground">Room</th>
-                        <th className="text-center pb-3 px-2 text-sm font-semibold text-muted-foreground">Students</th>
-                        <th className="text-right pb-3 px-2 text-sm font-semibold text-muted-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {([] as ExamDuty[]).map((duty) => (
-                        <motion.tr
-                          key={duty.id}
-                          variants={item}
-                          className="border-b border-border/40 hover:bg-muted/30 transition-colors"
-                        >
-                          <td className="py-3 px-2">
-                            <span className="font-medium">{duty.examinerName}</span>
-                          </td>
-                          <td className="py-3 px-2 text-sm">{duty.subject}</td>
-                          <td className="py-3 px-2 text-center">
-                            <span className="text-sm">{format(new Date(duty.date), 'MMM d, yyyy')}</span>
-                          </td>
-                          <td className="py-3 px-2 text-center">
-                            <span className={cn(
-                              "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium",
-                              duty.session === 'Forenoon' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
-                            )}>
-                              {duty.session}
-                            </span>
-                          </td>
-                          <td className="py-3 px-2 text-center font-mono text-sm">{duty.room}</td>
-                          <td className="py-3 px-2 text-center">
-                            <span className="font-mono font-semibold">{duty.students}</span>
-                          </td>
-                          <td className="py-3 px-2 text-right">
-                            <Button variant="ghost" size="sm">Edit</Button>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="p-4 rounded-xl bg-muted/50 mb-4">
+                  <Users className="w-8 h-8 text-muted-foreground" />
                 </div>
-              </Wrapper>
+                <h3 className="font-display font-semibold text-lg mb-1">No Invigilation Duties Assigned</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Invigilation duty assignments will appear here once configured for upcoming examinations.
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -387,32 +349,74 @@ export default function AdminExaminations() {
               </div>
             </CardHeader>
             <CardContent>
-              <Wrapper variants={container} initial="hidden" animate="show">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <motion.div variants={item} className="p-4 rounded-xl border-2 border-border/60 bg-card">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-display font-semibold">Mid-Semester I</h3>
-                      <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-success/10 text-success">Evaluated</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">Results published for all departments</p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">View Stats</Button>
-                      <Button size="sm" className="flex-1">Download</Button>
-                    </div>
-                  </motion.div>
-                  <motion.div variants={item} className="p-4 rounded-xl border-2 border-border/60 bg-card">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-display font-semibold">End-Semester</h3>
-                      <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-warning/10 text-warning">Pending</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">Evaluation in progress</p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">Reminder</Button>
-                      <Button size="sm" className="flex-1">Upload</Button>
-                    </div>
-                  </motion.div>
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-20 bg-muted rounded-lg animate-pulse" />
+                  ))}
                 </div>
-              </Wrapper>
+              ) : !examinations || examinations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="p-4 rounded-xl bg-muted/50 mb-4">
+                    <Award className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-display font-semibold text-lg mb-1">No Examinations Found</h3>
+                  <p className="text-sm text-muted-foreground">Create examinations first to manage their results.</p>
+                </div>
+              ) : (
+                <Wrapper variants={container} initial="hidden" animate="show">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {examinations.map((exam) => {
+                      const statusStyle = getStatusColor(exam.status);
+                      const isEvaluated = exam.status === 'evaluated' || exam.status === 'completed';
+                      return (
+                        <motion.div
+                          key={exam.id}
+                          variants={item}
+                          className="p-4 rounded-xl border-2 border-border/60 bg-card"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-display font-semibold">{exam.title}</h3>
+                            <span className={cn(
+                              "px-2.5 py-1 rounded-md text-xs font-medium",
+                              statusStyle.bg, statusStyle.text
+                            )}>
+                              {exam.status.charAt(0).toUpperCase() + exam.status.slice(1)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Semester {exam.semester} • {exam.academicYear}
+                          </p>
+                          <p className="text-xs text-muted-foreground mb-3">
+                            {format(new Date(exam.startDate), 'MMM d')} – {format(new Date(exam.endDate), 'MMM d, yyyy')}
+                          </p>
+                          <div className="mt-4 pt-4 border-t border-border/40">
+                            {isEvaluated ? (
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="flex-1" onClick={async () => {
+                                  try {
+                                    const res = await fetch(`${apiConfig.baseUrl}/examinations/${exam.id}/stats`, { headers: apiConfig.headers });
+                                    const data = await res.json();
+                                    alert(`Pass Percentage: ${data.passPercentage}%\nAverage Score: ${data.averageScore}\nTotal Students: ${data.totalStudents}`);
+                                  } catch (e) {
+                                    alert("Failed to load stats");
+                                  }
+                                }}>View Stats</Button>
+                                <Button size="sm" className="flex-1" onClick={() => window.open(`${apiConfig.baseUrl}/examinations/${exam.id}/download-results`, '_blank')}>Download</Button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="flex-1" onClick={() => examinationMutations.remindFaculty.mutate(exam.id)}>Send Reminder</Button>
+                                <Button size="sm" className="flex-1" onClick={() => alert("Upload results functionality ready. Please attach CSV.")}>Upload Results</Button>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </Wrapper>
+              )}
             </CardContent>
           </Card>
         )}

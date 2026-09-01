@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight, X,
-  Pencil, Trash2
+  Pencil, Trash2, Copy, CheckCheck, KeyRound
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,6 +50,8 @@ export default function AdminFaculty() {
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFacultyId, setEditFacultyId] = useState<string | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{ name: string; employeeCode: string; email: string; password: string } | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   const facultyMutations = useFacultyMutations();
 
@@ -92,8 +94,14 @@ export default function AdminFaculty() {
   const handleCreateFaculty = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await facultyMutations.create.mutateAsync(facultyForm);
+      const result = await facultyMutations.create.mutateAsync(facultyForm);
       setShowAddModal(false);
+      setCreatedCredentials({
+        name: result.name ?? facultyForm.name,
+        employeeCode: result.employeeCode,
+        email: result.email ?? facultyForm.email,
+        password: 'faculty123',
+      });
       setFacultyForm({
         name: '', email: '', phone: '', department: '', designation: 'Assistant Professor', qualification: ''
       });
@@ -101,6 +109,12 @@ export default function AdminFaculty() {
       console.error('Failed to create faculty:', err);
       alert('Failed to create faculty. Please check input details.');
     }
+  };
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const handleEditFaculty = async (e: React.FormEvent) => {
@@ -452,6 +466,58 @@ export default function AdminFaculty() {
                 </Button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ── Credentials Modal ─────────────────────────────── */}
+      {createdCredentials && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl border-2 border-border w-full max-w-sm shadow-xl"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-success/10">
+                  <KeyRound className="w-4 h-4 text-success" />
+                </div>
+                <h2 className="font-display text-base font-semibold">Faculty Created</h2>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setCreatedCredentials(null)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-muted-foreground">Share these login credentials with <span className="font-semibold text-foreground">{createdCredentials.name}</span>.</p>
+              {[
+                { label: 'Employee Code (Login ID)', value: createdCredentials.employeeCode, key: 'emp' },
+                { label: 'Email', value: createdCredentials.email, key: 'email' },
+                { label: 'Default Password', value: createdCredentials.password, key: 'pass' },
+              ].map(({ label, value, key }) => (
+                <div key={key} className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">{label}</p>
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted border border-border/60">
+                    <span className="flex-1 font-mono text-sm">{value}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => handleCopy(value, key)}
+                    >
+                      {copied === key
+                        ? <CheckCheck className="w-3.5 h-3.5 text-success" />
+                        : <Copy className="w-3.5 h-3.5" />}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-warning pt-1">⚠ The faculty member should change their password after first login.</p>
+            </div>
+            <div className="px-4 pb-4">
+              <Button className="w-full" onClick={() => setCreatedCredentials(null)}>Done</Button>
+            </div>
           </motion.div>
         </div>
       )}

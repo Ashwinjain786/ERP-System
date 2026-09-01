@@ -122,7 +122,6 @@ export default function Admin() {
                   subtext={`${students?.length || 0} in current semester`}
                   icon={GraduationCap}
                   color="bg-emerald-500"
-                  trend={{ value: 5.2, positive: true }}
                 />
                 <StatCard 
                   label="Total Faculty" 
@@ -137,7 +136,6 @@ export default function Admin() {
                   subtext={`₹${((metrics?.totalFeeRevenue || 0) / 10000000).toFixed(1)}Cr collected`}
                   icon={DollarSign}
                   color="bg-amber-500"
-                  trend={{ value: 3.1, positive: true }}
                 />
                 <StatCard 
                   label="Avg Attendance" 

@@ -71,7 +71,7 @@ export default function AdminAdmissions() {
 
   const { data: admissionsData } = useAdmissions();
   const admissionMutations = useAdmissionMutations();
-  
+
   const handleUpdateStatus = async (status: 'approved' | 'rejected') => {
     if (!selectedApp) return;
     try {
@@ -82,7 +82,7 @@ export default function AdminAdmissions() {
       alert('Failed to update status');
     }
   };
-  
+
   const applications = (Array.isArray(admissionsData) ? admissionsData : []) as AdmissionApplication[];
 
   const filteredAdmissions = applications.filter((app) => {
@@ -101,7 +101,7 @@ export default function AdminAdmissions() {
   const acceptanceRate = stats.totalApplications > 0 ? ((stats.approved / stats.totalApplications) * 100).toFixed(1) : '0.0';
 
   const statCards = [
-    { label: 'Total Applications', value: stats.totalApplications, icon: Users, color: 'bg-info', subtext: '+12% from last year' },
+    { label: 'Total Applications', value: stats.totalApplications, icon: Users, color: 'bg-info', subtext: `${stats.pending} pending review` },
     { label: 'Approved', value: stats.approved, icon: CheckCircle, color: 'bg-success', subtext: `${acceptanceRate}% acceptance` },
     { label: 'Pending Review', value: stats.pending, icon: Clock, color: 'bg-warning', subtext: 'Requires action' },
     { label: 'Rejected', value: stats.rejected, icon: XCircle, color: 'bg-destructive', subtext: 'Below criteria' },
@@ -123,7 +123,7 @@ export default function AdminAdmissions() {
                     <p className="text-sm text-muted-foreground">Track and manage admission applications</p>
                   </div>
                 </div>
-                <Button>
+                <Button onClick={() => window.open(`${apiConfig.baseUrl}/analytics/admissions/report`, '_blank')}>
                   <FileText className="w-4 h-4 mr-2" /> Generate Report
                 </Button>
               </div>
@@ -308,12 +308,12 @@ export default function AdminAdmissions() {
                   <p>{selectedApp.category} / {selectedApp.quota}</p>
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t border-border flex justify-end gap-2">
                 {selectedApp.status === 'pending' ? (
                   <>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="text-destructive hover:bg-destructive/10"
                       onClick={() => handleUpdateStatus('rejected')}
                       disabled={admissionMutations.updateStatus.isPending}
@@ -321,7 +321,7 @@ export default function AdminAdmissions() {
                       {admissionMutations.updateStatus.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
                       Reject
                     </Button>
-                    <Button 
+                    <Button
                       className="bg-success text-success-foreground hover:bg-success/90"
                       onClick={() => handleUpdateStatus('approved')}
                       disabled={admissionMutations.updateStatus.isPending}

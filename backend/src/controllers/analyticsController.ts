@@ -88,6 +88,36 @@ export const getAdmissionsAnalytics = async (req: Request, res: Response) => {
   }
 };
 
+export const exportAdmissionsReport = async (req: Request, res: Response) => {
+  try {
+    const apps = await prisma.admissionApplication.findMany({
+      orderBy: { appliedDate: 'desc' }
+    });
+
+    const csvRows = [
+      ['Application ID', 'Name', 'Program', 'Department', 'Category', 'Quota', 'Status', 'Date'],
+      ...apps.map(a => [
+        a.applicationId,
+        `"${a.applicantName}"`,
+        a.program,
+        a.department,
+        a.category,
+        a.quota,
+        a.status,
+        a.appliedDate.toISOString().split('T')[0]
+      ])
+    ];
+
+    const csvContent = csvRows.map(e => e.join(",")).join("\n");
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="admissions_report.csv"');
+    res.send(csvContent);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error generating report' });
+  }
+};
+
 export const getAcademicPerformanceAnalytics = async (req: Request, res: Response) => {
   try {
     // Compute from ExamResult

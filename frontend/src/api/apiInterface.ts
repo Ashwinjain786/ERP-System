@@ -389,6 +389,7 @@ export interface Notice {
   publishedBy?: string;
   publishedAt: string;
   isUrgent?: boolean;
+  isPinned?: boolean;
 }
 
 export interface NoticeInput {

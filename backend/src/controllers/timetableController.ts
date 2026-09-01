@@ -171,3 +171,50 @@ export const saveTimetable = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const exportTimetable = async (req: Request, res: Response) => {
+  try {
+    const { department, semester, section } = req.query;
+    if (!department || !semester || !section) {
+      return res.status(400).json({ success: false, message: 'Missing department, semester, or section' });
+    }
+
+    const dept = await prisma.department.findFirst({ where: { name: department as string } });
+    if (!dept) return res.status(404).json({ success: false, message: 'Department not found' });
+
+    const entries = await prisma.timetableEntry.findMany({
+      where: {
+        departmentId: dept.id,
+        semester: Number(semester),
+        section: section as string
+      },
+      include: { course: true, faculty: { include: { user: true } } },
+      orderBy: [{ dayOfWeek: 'asc' }, { period: 'asc' }]
+    });
+
+    const csvRows = [
+      ['Day', 'Period', 'TimeSlot', 'Course Code', 'Course Name', 'Faculty', 'Room', 'Section']
+    ];
+
+    entries.forEach(e => {
+      csvRows.push([
+        e.dayOfWeek,
+        e.period.toString(),
+        e.timeSlot,
+        e.course.code,
+        `"${e.course.name}"`,
+        `"${e.faculty.user?.name || e.faculty.employeeCode}"`,
+        e.roomNumber,
+        e.section
+      ]);
+    });
+
+    const csvContent = csvRows.map(e => e.join(",")).join("\n");
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="timetable_${department}_S${semester}_Sec${section}.csv"`);
+    res.send(csvContent);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error generating timetable export' });
+  }
+};

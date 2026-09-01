@@ -13,8 +13,8 @@ import {
   createDepartment, updateDepartment, deleteDepartment,
   createStudent, updateStudent, deleteStudent,
   createFaculty, updateFaculty, deleteFaculty,
-  createNotice, updateNotice, deleteNotice,
-  createExamination, updateExamination, deleteExamination, releaseHallTickets,
+  createNotice, updateNotice, deleteNotice, pinNotice,
+  createExamination, updateExamination, deleteExamination, releaseHallTickets, remindFaculty,
   createCourse, updateCourse, deleteCourse,
   updateRolePermissions,
   updateAdmissionStatus, saveTimetable
@@ -144,6 +144,10 @@ export function useNoticeMutations() {
       mutationFn: deleteNotice,
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'notices'] }),
     }),
+    pin: useMutation({
+      mutationFn: pinNotice,
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'notices'] }),
+    }),
   };
 }
 
@@ -202,6 +206,13 @@ export function useExaminationMutations() {
       mutationFn: releaseHallTickets,
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'examinations'] }),
     }),
+    remindFaculty: useMutation({
+      mutationFn: remindFaculty,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'examinations'] });
+        alert("Reminder sent to faculty");
+      }
+    })
   };
 }
 
