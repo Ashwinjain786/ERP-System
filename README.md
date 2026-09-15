@@ -97,3 +97,18 @@ Public machine-readable files are available at `/sitemap.xml`, `/robots.txt`, an
 | Library     | Catalog, Circulation, Fines                    |
 | Finance     | Structures, Transactions, Dues, Reports        |
 | Analytics   | Overview, Admissions, Academic Performance, Placement, Financial Health |
+
+---
+
+## 🧠 Phase 2: AI & Machine Learning Roadmap (TODO)
+
+Detailed architecture and specifications are documented in [docs/PHASE_2_AI_ML_ROADMAP.md](docs/PHASE_2_AI_ML_ROADMAP.md).
+
+| # | AI/ML Module | Target Area | Technique / Tech Stack | Status |
+|---|--------------|-------------|------------------------|--------|
+| 1 | **Student Academic Risk & Dropout Prediction** | Analytics / Faculty Portal | Supervised Learning (Random Forest, XGBoost), Python, FastAPI | 📋 Planned (Phase 2) |
+| 2 | **CampusOne AI Assistant (RAG Chatbot)** | Global Floating Widget | GenAI / RAG, Google Gemini / OpenAI, LangChain, PostgreSQL `pgvector` | 📋 Planned (Phase 2) |
+| 3 | **Smart Facial Recognition Attendance** | Faculty Attendance | Computer Vision, OpenCV, FaceNet / DeepFace, Python | 📋 Planned (Phase 2) |
+| 4 | **Smart Automated Timetable Generator** | Admin Timetable | Constraint Satisfaction / Optimization, Google OR-Tools / Genetic Algorithms | 📋 Planned (Phase 2) |
+| 5 | **Placement & Skill Readiness Recommender** | Student Placement Analytics | NLP & Recommendation Systems, Sentence Transformers, Scikit-Learn | 📋 Planned (Phase 2) |
+
